@@ -66,3 +66,23 @@ jobs:
           # Publish the module
           $tempPath = Resolve-Path -Path $env:ModuleName
           Publish-Module -Path $tempPath -NuGetApiKey $env:PSGALLERY_API_KEY -Verbose
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## Changes in ${{ github.ref_name }}
+
+            This release includes the AzureDevOpsApi PowerShell module.
+
+            ### Installation
+            ```powershell
+            Install-Module -Name AzureDevOpsApi -Repository PSGallery
+            ```
+          draft: false
+          prerelease: false
