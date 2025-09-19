@@ -1,0 +1,15 @@
+# Ignore files used for development
+/run*.ps1
+/test*.ps1
+
+# Ignore files generated for publishing
+/[Mm]erged
+
+# Output of Export-...MarkDown
+output.md
+
+# Output of Invoke-Pester (with code coverage enabled)
+coverage.xml
+
+# Output of PlatyPS documentation generator
+docs.log
