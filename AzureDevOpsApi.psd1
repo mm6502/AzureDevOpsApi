@@ -12,7 +12,7 @@
     RootModule        = 'AzureDevOpsApi.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '0.2.5'
+    ModuleVersion     = '0.2.6'
 
 	# Supported PSEditions
 	CompatiblePSEditions = @('Desktop', 'Core')
@@ -104,8 +104,8 @@ It allows querying work items and creating release notes.'
             # Tags applied to this module. These help with module discovery in online galleries.
             Tags = @('Azure', 'DevOps', 'AzureDevOps', 'Server', 'REST', 'Api', 'Client')
 
-            # A URL to the license for this module.
-            LicenseUri = 'https://github.com/mm6502/AzureDevOpsApi/blob/main/LICENSE.txt'
+            # License for this module.
+            PackageLicenseExpression = 'EUPL-1.2'
 
             # A URL to the main website for this project.
             ProjectUri = 'https://github.com/mm6502/AzureDevOpsApi/wiki/Azure-DevOps-Api-Powershell-Module'
