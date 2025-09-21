@@ -27,25 +27,22 @@ Server (with appropriate API compatibility).
 
 ## Quick start
 
-First, you need to install the module.
+Install the module from the PowerShell Gallery (this is a one-time step).
 
 ```powershell
-# Install from the PowerShell Gallery
 Install-Module -Name AzureDevOpsApi
 ```
 
 Import the module into your session.
 
 ```powershell
-# Import the module into your session
 Import-Module -Name AzureDevOpsApi
 ```
 
 Set the default connection parameters for the current session. For brevity,
-this example uses a Personal Access Token (PAT) for authentication.
+this example uses a Personal Access Token (PAT) for authorization.
 
 ```powershell
-# Set defaults for your organization and project
 Set-ApiVariables `
     -CollectionUri 'https://dev.azure.com/my-org' `
     -Project 'MyProject' `
@@ -53,18 +50,24 @@ Set-ApiVariables `
     -Token 'my-personal-access-token'
 ```
 
-Example usage
+Then getting a work item by ID (uses session defaults for CollectionUri, Project and Authorization)
 
 ```powershell
-# Get a work item by ID (uses session defaults for CollectionUri, Project and Authorization)
-Get-WorkItem -WorkItem 123
-
-# Export release notes data (uses session defaults for CollectionUri, Project and Authorization)
-Export-ReleaseNotesFromGitToExcel `
-    -Repository 'MyRepo' `
-    -FromDate '2025-12-15' `
-    -ToDate '2025-12-31'
+Get-WorkItem 123
 ```
+
+should write out plain work item object as returned from the Azure DevOps REST API
+
+<pre style="white-space: pre; text-overflow: ellipsis; overflow: hidden;">
+id        : 123
+rev       : 42
+fields    : @{System.AreaPath=MyProject; System.TeamProject=MyProject; System.IterationPath=MyProject;...}
+relations : {@{rel=System.LinkTypes.Related; url=https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-...}
+_links    : @{self=; workItemUpdates=; workItemRevisions=; workItemComments=; html=; workItemType=; fi...}
+url       : https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-eed3dfc290ea/_apis/wit/workItems/123
+</pre>
+
+For more examples, see the [documentation overview](./Docs/readme.md).
 
 License
 
