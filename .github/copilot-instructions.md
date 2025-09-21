@@ -12,11 +12,12 @@
     - `Public/` (exported cmdlets),
     - `Private/` (helpers),
     - `Tests/`,
-    - `Docs/`.
+    - `Docs/` (markdown docs),
+    - `Docs/functions/` (auto-generated function docs).
 
 - Loader: `AzureDevOpsApi.psm1` dot-sources `Init/Init.ps1` then all `Private/*.ps1` and `Public/*.ps1`.
-  Add exported cmdlets to `Public/`. Has `$ForTests` argument to enable exporting Private functions for
-  tests. Usage: `Import-Module .\AzureDevOpsApi.psm1 -ArgumentList @($true)`.
+  Has `$ForTests` argument to enable exporting Private functions for tests. Usage:
+  `Import-Module .\AzureDevOpsApi.psm1 -ArgumentList @($true)`.
 
 - Important globals in `Init/Globals.ps1`:
 
@@ -25,14 +26,14 @@
     -`$global:ApiProjectsCache`,
     -`$global:AzureDevOpsApi_RetryConfig`.
 
-    Treat mutations carefully and update tests.
+    Treat mutations of globals carefully and update tests.
 
 - Testing:
 
     - Run individual test files by directly calling them with `Tests/*/<tested-function>.tests.ps1`
       when needed.
-    - When needed run all tests with `Tests/run.ps1` (Pester). Use `-SkipCodeCoverage` or `-Detailed`
-      as needed. Tests enable batch mode (`$global:BatchTests = $true`).
+    - When needed to run all tests, run `Tests/run.ps1`. Use `-SkipCodeCoverage` or `-Detailed`
+      arguments when needed.
 
 - Coding:
 
