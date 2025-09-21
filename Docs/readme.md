@@ -7,34 +7,29 @@ It allows querying, creating and modifying work items and creating release notes
 
 ## Principles
 
-The module operates on credential-based authentication, allowing both Windows
+The module operates on credential-based authorization, allowing both Windows
 default credentials, username / password credentials and API tokens. It
 maintains a centralized configuration through global variables that can be set
-once and reused across function calls. The module follows a hierarchical
-approach to data handling, where work items, pull requests, and their
-relationships are tracked and can be exported in various formats. It
-emphasizes reusability by allowing parameters to be passed down through the
-call chain while providing sensible defaults when not specified.
+once and reused across function calls, while the session lasts. The module
+follows a hierarchical approach to data handling, where work items, pull
+requests, and their relationships are tracked and can be exported in various
+formats. It emphasizes reusability by allowing parameters to be passed down
+through the call chain while providing sensible defaults when not specified.
 
 Read more in [Principles](principles.md).
 
-## Quick Start
+## How to start
 
 ### Setup
 
-``` powershell
-if (-not (Get-PSRepository -Name 'dev-proget')) {
-    Register-PSRepository `
-        -Name 'dev-proget' `
-        -SourceLocation 'https://dev-proget/nuget/PowerShell/' `
-        -InstallationPolicy 'Trusted'
-}
-if (-not (Get-InstalledModule -Name 'ImportExcel')) {
-    Install-Module -Name 'ImportExcel'
-}
-if (-not (Get-InstalledModule -Name 'AzureDevOpsApi')) {
-    Install-Module -Repository 'dev-proget' -Name 'AzureDevOpsApi'
-}
+Install prerequisites and the module itself from the PowerShell Gallery
+
+```powershell
+# ImportExcel - For exporting to Excel files
+Install-Module -Name 'ImportExcel'
+
+# Install the module
+Install-Module -Name 'AzureDevOpsApi'
 ```
 
 ### Usage
@@ -47,7 +42,7 @@ Import-Module AzureDevOpsApi
 # Set the variables for the Azure DevOps collection and project.
 # Windows default credentials are used when not specified.
 Set-ApiVariables `
-    -Collection 'https://dev-tfs/tfs/internal_projects' `
+    -Collection 'https://dev.azure.com/my-org/my-project' `
     -Project 'Project42'
 
 # Assuming the work item ids came from a pull request.
@@ -58,7 +53,7 @@ Add-WorkItemToReleaseNotesData `
 | Format-Table 'WorkItemId', 'WorkItemType', 'Reasons', 'Relations'
 ```
 
-Output:
+Output should look like this:
 
 ``` text
 WorkItemId WorkItemType Reasons                         Relations
@@ -73,9 +68,9 @@ WorkItemId WorkItemType Reasons                         Relations
 373862     Feature      PullRequest, Parent             Parent (#373875)
 ```
 
-#### Generating Release Notes
+#### Generating Release Notes Data
 
-For example, if we want to generate release notes for project "SIZP_KSED",
+For example, if we want to generate release notes data for project "Project42",
 it is recomended to make 2 files.
 
 1. `project42.release.ps1`, which will greatly simplify the usage by setting
@@ -133,7 +128,7 @@ the common parameters for given use case:
     Import-Module AzureDevOpsApi -Force
 
     Set-ApiVariables `
-        -Collection 'https://dev-tfs/tfs/internal_projects' `
+        -Collection 'https://dev.azure.com/my-org' `
         -Project 'Project42'
 
     Export-ReleaseNotesFromGitToExcel `
@@ -148,14 +143,52 @@ the common parameters for given use case:
         -Show:$Show
     ```
 
-2. `run.ps1`, which will be used to run the script.
+1. `run.ps1`, which will be used to run the script.
 
     ```powershell
     [CmdletBinding()]
     param()
 
-    & (Join-Path -Path $PSScriptRoot -ChildPath ksed.release.ps1) `
+    & (Join-Path -Path $PSScriptRoot -ChildPath '.\project42.release.ps1') `
         -DateFrom '2024-01-18Z' `
         -DateTo '2024-04-04Z' `
         -Show
     ```
+
+## Example
+
+This example shows how to set up credentials for different collections and
+projects and use them in API calls.
+
+``` powershell
+# Set default CollectionUri and Project
+Set-ApiVariables `
+    -CollectionUri 'https://dev.azure.com/my-org1' `
+    -Project 'MyProject1'
+    -Authorization 'PAT' `
+    -Token 'my-token1'
+
+# Add credentials for another collection and project
+Add-ApiCredential `
+    -CollectionUri 'https://dev.azure.com/other-org2' `
+    -Project 'OtherProject2' `
+    -Authorization 'PAT' `
+    -Token 'other-token2'
+
+# Get work item by ID from default collection and project
+# Note: the CollectionUri and Project are determined from the defaults
+Get-WorkItem 123
+
+# Get work item by ID from another collection and project
+# Note: the CollectionUri and Project must be specified
+Get-WorkItem 234 `
+    -CollectionUri 'https://dev.azure.com/other-org2' `
+    -Project 'OtherProject2'
+
+# Get work items by their urls
+# Note: the CollectionUri and Project are determined from the url
+# Note: Portal URLs or API URLs can be used
+Get-WorkItem 'https://dev.azure.com/my-org1/MyProject1/_workitems/edit/123'
+Get-WorkItem 'https://dev.azure.com/other-org2/OtherProject2/_apis/wit/workitems/234'
+```
+

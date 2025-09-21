@@ -1,6 +1,5 @@
 # AzureDevOpsApi
 
-
 AzureDevOpsApi is a PowerShell module that provides a thin, well-tested wrapper
 around the Azure DevOps REST APIs. It focuses on making common automation tasks
 straightforward from PowerShell scripts and pipelines: querying and updating
@@ -24,7 +23,7 @@ Server (with appropriate API compatibility).
 ## Quick links
 
 - [Documentation overview](./Docs/readme.md)
-- [Functions reference](./Docs/functions/)
+- [Functions reference](./Docs/functions/AzureDevOpsApi.md)
 
 ## Quick start
 
