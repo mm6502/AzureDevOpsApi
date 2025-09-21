@@ -1,0 +1,9 @@
+/* Workspace Markdown preview styles for VS Code to match code block rendering in GitHub. */
+/* Block-level preformatted code blocks */
+.markdown-body pre {
+    display: block !important;
+    white-space: pre !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    word-break: normal !important;
+}

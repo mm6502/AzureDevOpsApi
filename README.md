@@ -1,5 +1,6 @@
 # AzureDevOpsApi
 
+
 AzureDevOpsApi is a PowerShell module that provides a thin, well-tested wrapper
 around the Azure DevOps REST APIs. It focuses on making common automation tasks
 straightforward from PowerShell scripts and pipelines: querying and updating
@@ -50,22 +51,20 @@ Set-ApiVariables `
     -Token 'my-personal-access-token'
 ```
 
-Then getting a work item by ID (uses session defaults for CollectionUri, Project and Authorization)
+Now, getting a work item by ID (uses session defaults for CollectionUri, Project and Authorization) should write out plain work item object as returned from the Azure DevOps REST API.
 
 ```powershell
 Get-WorkItem 123
 ```
 
-should write out plain work item object as returned from the Azure DevOps REST API
-
-<pre style="white-space: pre; text-overflow: ellipsis; overflow: hidden;">
+```plaintext
 id        : 123
 rev       : 42
 fields    : @{System.AreaPath=MyProject; System.TeamProject=MyProject; System.IterationPath=MyProject;...}
 relations : {@{rel=System.LinkTypes.Related; url=https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-...}
 _links    : @{self=; workItemUpdates=; workItemRevisions=; workItemComments=; html=; workItemType=; fi...}
 url       : https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-eed3dfc290ea/_apis/wit/workItems/123
-</pre>
+```
 
 For more examples, see the [documentation overview](./Docs/readme.md).
 
