@@ -10,7 +10,8 @@ formats. It emphasizes reusability by allowing parameters to be passed down
 through the call chain while providing sensible defaults when not specified.
 
 The module also includes comprehensive retry logic to handle transient failures
-and ensure resilient API operations. Read more in [Retry Logic and Resilience](retry_logic.md).
+and ensure resilient API operations.
+Read more in [Retry Logic and Resilience](retry_logic.md).
 
 ## Authorization (REST API)
 
@@ -71,4 +72,56 @@ For convenience, the CollectionUri and Project can have default values set
 via [Set-ApiVariables](functions\Set-ApiVariables.md). These defaults
 are later used when the CollectionUri and Project are not specified.
 
+## Naming conventions for functions
 
+The module employs a deliberate naming convention that deviates from typical
+PowerShell cmdlet patterns. While standard PowerShell cmdlets use
+a `Verb-SingularNoun` pattern (like `Get-Process`), this module often
+includes "List" in function names (e.g., `Get-ProjectsList` vs `Get-Project`)
+to explicitly communicate the shape and intent of the returned data. This
+distinction helps reduce ambiguity when chaining functions or writing scripts
+that depend on receiving either a collection of (usually simplified) objects
+or a (usually single) detailed object(s).
+
+This naming approach directly reflects the underlying Azure DevOps REST API
+structure, which provides different representations of the same resources with
+varying levels of detail. The "List" variants typically return lightweight
+objects with fewer properties (suitable for enumeration and quick lookups),
+while the standard variants return richly detailed objects with additional
+metadata, links, and related entities. By incorporating this distinction
+into function names, the module makes it immediately clear which
+representation is being requested or consumed.
+
+## Function parameters
+
+Most module functions accept parameters for `CollectionUri`, `Project`. These
+parameters are optional in most cases, as the module maintains global defaults
+(set via [Set-ApiVariables](.\Docs\functions\Set-ApiVariables.md)) for
+convenience and scriptability. When not explicitly provided, functions will
+use the cached or default values, allowing for concise calls in interactive
+and automation scenarios.
+
+- **CollectionUri**: Specifies the Azure DevOps collection endpoint. If omitted,
+the module uses the globally set default.
+- **Project**: Identifies the Azure DevOps project. If not provided, the default
+project (if set) is used.
+
+This design enables seamless switching between multiple collections or projects
+within the same session, and supports scenarios where different credentials are
+required for different resources.
+
+## `InputObject` parameter
+
+Some functions support a generic `InputObject` parameter (although, it may be
+named otherwise). This parameter is intentionally flexible: it can accept
+a single object, an array of objects, or even simple identifiers (such as an
+integer or url of given resource). For example, `Get-WorkItem` allows you to
+pass either a work item object, an array of such objects, the work item ID(s)
+or url(s). The function will internally resolve the appropriate details as
+needed.
+
+This approach streamlines scripting and pipelining, as you can pass objects
+directly from one function to another without needing to extract or reformat
+their identifiers. It also enables concise one-liners and supports advanced
+scenarios where objects are filtered or transformed before being passed to
+subsequent functions.
