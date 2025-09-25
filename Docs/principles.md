@@ -57,8 +57,8 @@ default network credentials on Windows.
 ## How does it work?
 
 The module uses a credential cache system where API credentials can be
-registered using [Set-ApiVariables](functions\Set-ApiVariables.md) or
-[Add-ApiCredential](functions\Add-ApiCredential.md) functions. The cache is
+registered using [Set-ApiVariables](./functions/Set-ApiVariables.md) or
+[Add-ApiCredential](./functions/Add-ApiCredential.md) functions. The cache is
 stored in a global variable and lasts for the duration of the PowerShell session.
 Secrets are stored in memory only as a secure string and not persisted to disk.
 
@@ -69,7 +69,7 @@ appropriate cached credentials. This allows working with:
 - multiple Azure DevOps collections simultaneously.
 
 For convenience, the CollectionUri and Project can have default values set
-via [Set-ApiVariables](functions\Set-ApiVariables.md). These defaults
+via [Set-ApiVariables](./functions/Set-ApiVariables.md). These defaults
 are later used when the CollectionUri and Project are not specified.
 
 ## Naming conventions for functions
@@ -96,7 +96,7 @@ representation is being requested or consumed.
 
 Most module functions accept parameters for `CollectionUri`, `Project`. These
 parameters are optional in most cases, as the module maintains global defaults
-(set via [Set-ApiVariables](.\Docs\functions\Set-ApiVariables.md)) for
+(set via [Set-ApiVariables](./functions/Set-ApiVariables.md)) for
 convenience and scriptability. When not explicitly provided, functions will
 use the cached or default values, allowing for concise calls in interactive
 and automation scenarios.

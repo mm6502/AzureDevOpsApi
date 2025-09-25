@@ -16,7 +16,14 @@ requests, and their relationships are tracked and can be exported in various
 formats. It emphasizes reusability by allowing parameters to be passed down
 through the call chain while providing sensible defaults when not specified.
 
-Read more in [Principles](principles.md).
+Read more in [principles](principles.md).
+
+## Work Items and Relations
+
+The module provides comprehensive support for managing work items and their
+relationships within Azure DevOps. You can create, update, and query work items,
+as well as manage their links to other work items, such as parent-child relationships.
+Read more in [methodology](./methodology/work-methodology.md).
 
 ## How to start
 
@@ -187,8 +194,8 @@ Get-WorkItem 234 `
 
 # Get work items by their urls
 # Note: the CollectionUri and Project are determined from the url
-# Note: Portal URLs or API URLs can be used
+# API URL
+Get-WorkItem 'https://dev.azure.com/my-org1/MyProject1/_apis/wit/workitems/123'
+# Portal URL can be used as well
 Get-WorkItem 'https://dev.azure.com/my-org1/MyProject1/_workitems/edit/123'
-Get-WorkItem 'https://dev.azure.com/other-org2/OtherProject2/_apis/wit/workitems/234'
 ```
-
