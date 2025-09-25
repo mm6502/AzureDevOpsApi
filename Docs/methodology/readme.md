@@ -60,7 +60,7 @@ Process of building Release Notes data starts from the Work Item that is associa
 
 Relationships are tracked in the direction of the arrow.
 
-The Parent / Child relationship are shown without description for clarity.
+The Parent / Child relationship are shown as dashed lines without description for clarity.
 
 Other oriented relationships have both an arrow and text explaining how the relationship should be read.
 

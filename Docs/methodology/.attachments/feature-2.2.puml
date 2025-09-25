@@ -1,4 +1,4 @@
-@startuml Feature 2.2
+@startuml feature-2.2
 
 '''' Declarations to stylize the diagram '''
 hide circle
@@ -31,10 +31,10 @@ TestCase1      : #374363
 VRequirement2  : #374360
 VTask2         : #374362
 
-Feature2_2    -right- VRequirement1 : <
-VRequirement1 -       VTask1        : <
-Feature2_2    -right- VRequirement2 : <
-VRequirement2 -       VTask2        : <
+Feature2_2    .right. VRequirement1 : <
+VRequirement1 ...     VTask1        : <
+Feature2_2    .right. VRequirement2 : <
+VRequirement2 ...     VTask2        : <
 
 VRequirement2  "Successor"  -up- "Predecessor" VRequirement1 : replaced by <
 TestCase1      "TestedBy"   -up- "Tests"       VRequirement2 : tested by <
