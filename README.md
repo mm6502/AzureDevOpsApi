@@ -27,9 +27,10 @@ Server (with appropriate API compatibility).
 
 ## Quick start
 
-Install the module from the PowerShell Gallery (this is a one-time step).
+Install the module and its prerequisites from the PowerShell Gallery (this is a one-time step).
 
 ```powershell
+Install-Module -Name ImportExcel
 Install-Module -Name AzureDevOpsApi
 ```
 
@@ -65,7 +66,7 @@ _links    : @{self=; workItemUpdates=; workItemRevisions=; workItemComments=; ht
 url       : https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-eed3dfc290ea/_apis/wit/workItems/123
 ```
 
-For more examples, see the [documentation overview](./Docs/readme.md).
+For more examples, see the [examples overview](./Docs/examples/readme.md).
 
 License
 
