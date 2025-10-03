@@ -30,8 +30,8 @@ Server (with appropriate API compatibility).
 Install the module and its prerequisites from the PowerShell Gallery (this is a one-time step).
 
 ```powershell
-Install-Module -Name ImportExcel
-Install-Module -Name AzureDevOpsApi
+Install-Module -Name ImportExcel -AllowClobber
+Install-Module -Name AzureDevOpsApi -AllowClobber
 ```
 
 Import the module into your session.
