@@ -7,155 +7,29 @@ It allows querying, creating and modifying work items and creating release notes
 
 ## Principles
 
-The module operates on credential-based authentication, allowing both Windows
+The module operates on credential-based authorization, allowing both Windows
 default credentials, username / password credentials and API tokens. It
 maintains a centralized configuration through global variables that can be set
-once and reused across function calls. The module follows a hierarchical
-approach to data handling, where work items, pull requests, and their
-relationships are tracked and can be exported in various formats. It
-emphasizes reusability by allowing parameters to be passed down through the
-call chain while providing sensible defaults when not specified.
+once and reused across function calls, while the session lasts. The module
+follows a hierarchical approach to data handling, where work items, pull
+requests, and their relationships are tracked and can be exported in various
+formats. It emphasizes reusability by allowing parameters to be passed down
+through the call chain while providing sensible defaults when not specified.
 
-Read more in [Principles](principles.md).
+Read more in [principles](principles.md).
 
-## Quick Start
+## Work Items and Relations
 
-### Setup
+The module provides comprehensive support for managing work items and their
+relationships within Azure DevOps. You can create, update, and query work items,
+as well as manage their links to other work items, such as parent-child relationships.
+Read more in [methodology](./methodology/work-methodology.md).
 
-``` powershell
-if (-not (Get-PSRepository -Name 'dev-proget')) {
-    Register-PSRepository `
-        -Name 'dev-proget' `
-        -SourceLocation 'https://dev-proget/nuget/PowerShell/' `
-        -InstallationPolicy 'Trusted'
-}
-if (-not (Get-InstalledModule -Name 'ImportExcel')) {
-    Install-Module -Name 'ImportExcel'
-}
-if (-not (Get-InstalledModule -Name 'AzureDevOpsApi')) {
-    Install-Module -Repository 'dev-proget' -Name 'AzureDevOpsApi'
-}
-```
+## Examples
 
-### Usage
+Comprehensive examples demonstrating common use cases are available in the [examples](./examples/readme.md):
 
-#### Basic Functions
-
-``` powershell
-Import-Module AzureDevOpsApi
-
-# Set the variables for the Azure DevOps collection and project.
-# Windows default credentials are used when not specified.
-Set-ApiVariables `
-    -Collection 'https://dev-tfs/tfs/internal_projects' `
-    -Project 'Project42'
-
-# Assuming the work item ids came from a pull request.
-$workItemIds = @(373872, 373877, 373870)
-Add-WorkItemToReleaseNotesData `
-    -Reason 'PullRequest' `
-    -WorkItemId $workItemIds `
-| Format-Table 'WorkItemId', 'WorkItemType', 'Reasons', 'Relations'
-```
-
-Output:
-
-``` text
-WorkItemId WorkItemType Reasons                         Relations
----------- ------------ -------                         ---------
-373872     Task         PullRequest                     Child (#373871)
-373877     Task         PullRequest                     Child (#373875)
-373870     Task         PullRequest                     Child (#373863)
-373871     Bug          PullRequest, Parent             Parent (#373872), TestedBy (#373869)
-373875     Requirement  PullRequest, Parent             Parent (#373877), Child (#373862), Affects (#373863)
-373863     Requirement  PullRequest, Parent, AffectedBy Parent (#373870), TestedBy (#373869), Child (#373862)
-373869     Test Case    PullRequest, Tests              Tests (#373871)
-373862     Feature      PullRequest, Parent             Parent (#373875)
-```
-
-#### Generating Release Notes
-
-For example, if we want to generate release notes for project "SIZP_KSED",
-it is recomended to make 2 files.
-
-1. `project42.release.ps1`, which will greatly simplify the usage by setting
-the common parameters for given use case:
-
-    ```powershell
-    #requires -version 5
-    <#
-        .SYNOPSIS
-            Runs exemplary compilation of release notes data.
-
-        .PARAMETER DateFrom
-            Starting date for the considered PullRequests.
-
-        .PARAMETER DateTo
-            Ending date for the considered PullRequests.
-
-        .PARAMETER AsOf
-            Gets the Work Items as they were at this date and time.
-
-        .PARAMETER TargetBranch
-            Target branch for the PullRequests.
-            Default is 'master'.
-
-        .PARAMETER Path
-            Path, where the generated file will be saved.
-            Can be a direcotry or filename, relative or absolute.
-            Default is the user's Desktop.
-
-        .PARAMETER UseConstantFileName
-            Flag, whether to use constant file name.
-            If $true, 'ReleaseNotes.xlsx' will be the name of generated file.
-            Otherwise, name of the file will also contain date and time of creation.
-
-        .PARAMETER Show
-            Flag, whether open the exported document in associated application.
-
-        .PARAMETER PassThru
-            Flag, whether return the generated file.
-            This can be used to hand down the file to another process.
-    #>
-
-    [CmdletBinding()]
-    param(
-        [Nullable[DateTime]] $DateFrom,
-        [Nullable[DateTime]] $DateTo,
-        [Nullable[DateTime]] $AsOf,
-        $TargetBranch = 'master',
-        $Path = ([Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)),
-        [switch] $Show,
-        [switch] $UseConstantFileName,
-        [bool] $PassThru = $true
-    )
-
-    Import-Module AzureDevOpsApi -Force
-
-    Set-ApiVariables `
-        -Collection 'https://dev-tfs/tfs/internal_projects' `
-        -Project 'Project42'
-
-    Export-ReleaseNotesFromGitToExcel `
-        -TimeZone 'Central Europe Standard Time' `
-        -Path $Path `
-        -DateFrom $DateFrom `
-        -DateTo $DateTo `
-        -AsOf $AsOf `
-        -TargetBranch $TargetBranch `
-        -UseConstantFileName:$UseConstantFileName `
-        -PassThru:$PassThru `
-        -Show:$Show
-    ```
-
-2. `run.ps1`, which will be used to run the script.
-
-    ```powershell
-    [CmdletBinding()]
-    param()
-
-    & (Join-Path -Path $PSScriptRoot -ChildPath ksed.release.ps1) `
-        -DateFrom '2024-01-18Z' `
-        -DateTo '2024-04-04Z' `
-        -Show
-    ```
+- **[Basic Usage](./examples/basic-usage/01-quick-start.md)** - Getting started with the module
+- **[Credentials Management](./examples/credentials/01-multiple-credentials.md)** - Working with multiple Azure DevOps instances
+- **[Release Notes Generation](./examples/release-notes/)** - Automating release documentation
+- **[Work Items and Relationships](./examples/work-items/readme.md)** - Understanding work item patterns

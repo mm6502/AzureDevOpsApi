@@ -1,0 +1,42 @@
+@startuml feature-2.2
+
+'''' Declarations to stylize the diagram '''
+hide circle
+hide empty members
+allowmixing
+
+!theme mars
+skinparam classFontStyle bold
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor wheat
+
+'''' Work Items ''''
+object "(1) Feature 2.2" as Feature2_2
+
+object "(2) V Requirement 1" as VRequirement1
+object "(3) V Task 1" as VTask1
+note right : commit 1
+
+object "(4) Test Case 1" as TestCase1
+
+object "(5) V Requirement 2" as VRequirement2
+object "(6) V Task 2" as VTask2
+note right : commit 2
+
+'''' Work IteIDs ''''
+Feature2_2     : #374353
+VRequirement1  : #374359
+VTask1         : #374361
+TestCase1      : #374363
+VRequirement2  : #374360
+VTask2         : #374362
+
+Feature2_2    .right. VRequirement1 : <
+VRequirement1 ...     VTask1        : <
+Feature2_2    .right. VRequirement2 : <
+VRequirement2 ...     VTask2        : <
+
+VRequirement2  "Successor"  -up- "Predecessor" VRequirement1 : replaced by <
+TestCase1      "TestedBy"   -up- "Tests"       VRequirement2 : tested by <
+
+@enduml

@@ -23,29 +23,27 @@ Server (with appropriate API compatibility).
 ## Quick links
 
 - [Documentation overview](./Docs/readme.md)
-- [Functions reference](./Docs/functions/)
+- [Functions reference](./Docs/functions/AzureDevOpsApi.md)
 
 ## Quick start
 
-First, you need to install the module.
+Install the module and its prerequisites from the PowerShell Gallery (this is a one-time step).
 
 ```powershell
-# Install from the PowerShell Gallery
-Install-Module -Name AzureDevOpsApi
+Install-Module -Name ImportExcel -AllowClobber
+Install-Module -Name AzureDevOpsApi -AllowClobber
 ```
 
 Import the module into your session.
 
 ```powershell
-# Import the module into your session
 Import-Module -Name AzureDevOpsApi
 ```
 
 Set the default connection parameters for the current session. For brevity,
-this example uses a Personal Access Token (PAT) for authentication.
+this example uses a Personal Access Token (PAT) for authorization.
 
 ```powershell
-# Set defaults for your organization and project
 Set-ApiVariables `
     -CollectionUri 'https://dev.azure.com/my-org' `
     -Project 'MyProject' `
@@ -53,18 +51,22 @@ Set-ApiVariables `
     -Token 'my-personal-access-token'
 ```
 
-Example usage
+Now, getting a work item by ID (uses session defaults for CollectionUri, Project and Authorization) should write out plain work item object as returned from the Azure DevOps REST API.
 
 ```powershell
-# Get a work item by ID (uses session defaults for CollectionUri, Project and Authorization)
-Get-WorkItem -WorkItem 123
-
-# Export release notes data (uses session defaults for CollectionUri, Project and Authorization)
-Export-ReleaseNotesFromGitToExcel `
-    -Repository 'MyRepo' `
-    -FromDate '2025-12-15' `
-    -ToDate '2025-12-31'
+Get-WorkItem 123
 ```
+
+```plaintext
+id        : 123
+rev       : 42
+fields    : @{System.AreaPath=MyProject; System.TeamProject=MyProject; System.IterationPath=MyProject;...}
+relations : {@{rel=System.LinkTypes.Related; url=https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-...}
+_links    : @{self=; workItemUpdates=; workItemRevisions=; workItemComments=; html=; workItemType=; fi...}
+url       : https://dev.azure.com/my-org/cca29da0-0985-4714-bf09-eed3dfc290ea/_apis/wit/workItems/123
+```
+
+For more examples, see the [examples overview](./Docs/examples/readme.md).
 
 License
 

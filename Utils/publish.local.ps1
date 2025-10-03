@@ -2,7 +2,7 @@
 
 <#
     .SYNOPSIS
-        Publishes the module to .\Merged folder.
+        Publishes the module to .\merged folder.
 #>
 
 [CmdletBinding()]
@@ -32,6 +32,7 @@ Register-PSRepository `
 # If force is used, delete existing packages
 if ($Force.IsPresent -and $Force -eq $true) {
     Get-ChildItem $targetPath -Filter *.nupkg `
+    | Where-Object { $_.Name -like "$($ModuleName).*" } `
     | Remove-Item
 }
 
@@ -81,7 +82,12 @@ if (Get-Module -Name $ModuleName -ListAvailable) {
     Uninstall-Module -Name $ModuleName -Force -AllVersions
 
     # Install module from our private repository
-    Install-Module -Name $ModuleName -Repository $repositoryName -Scope 'CurrentUser' -Force
+    Install-Module `
+        -Name $ModuleName `
+        -Repository $repositoryName `
+        -Scope 'CurrentUser' `
+        -Force `
+        -AllowClobber
 }
 
 # Remove the local repository

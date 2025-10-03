@@ -1,0 +1,51 @@
+@startuml feature-1
+
+'''' Declarations to stylize the diagram '''
+hide circle
+hide empty members
+allowmixing
+
+!theme mars
+skinparam classFontStyle bold
+skinparam classAttributeIconSize 0
+skinparam noteBackgroundColor wheat
+
+'''' Work Items ''''
+object "(1) Feature 1" as Feature1
+object "(2) V Requirement 1" as VRequirement1
+object "(3) V Task 1" as VTask1
+note right : commit 1
+
+object "(4) Test Case 1" as TestCase1
+object "(5) Bug 1" as Bug1
+object "(6) B Task 1" as B1Task1
+note right : commit 2
+
+object "(7) Change Request 1" as ChangeRequest1
+object "(8) V Requirement 2" as VRequirement2
+object "(9) V Task 2" as VTask2
+note right : commit 3
+
+'''' Work Item IDs ''''
+Feature1       : #373862
+VRequirement1  : #373863
+TestCase1      : #373869
+VTask1         : #373870
+Bug1           : #373871
+B1Task1        : #373872
+ChangeRequest1 : #373874
+VRequirement2  : #373875
+VTask2         : #373877
+
+Feature1      ... VRequirement1 : <
+Feature1      ... VRequirement2 : <
+VRequirement1 ... VTask1        : <
+VRequirement2 ... VTask2        : <
+Bug1          ... B1Task1       : <
+
+TestCase1      "TestedBy"   --- "Tests"   VRequirement1 : tested by <
+TestCase1      "TestedBy"   --- "Tests"   Bug1          : tested by <
+VRequirement2  "AffectedBy" --- "Affects" VRequirement1 : affects >
+ChangeRequest1 "AffectedBy" --- "Affects" VRequirement2 : affects >
+
+@enduml
