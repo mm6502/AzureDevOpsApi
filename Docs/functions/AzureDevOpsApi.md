@@ -27,6 +27,9 @@ Adds or sets a query parameter in the given URI.
 ### [Add-ReleaseNotesDataItemRelation](Add-ReleaseNotesDataItemRelation.md)
 Add a link between two given Work Items.
 
+### [Add-WorkItemRelationDescriptor](Add-WorkItemRelationDescriptor.md)
+Adds a single work item relationship descriptor to the cache.
+
 ### [Add-WorkItemToReleaseNotesData](Add-WorkItemToReleaseNotesData.md)
 Adds the given work items to the release notes data.
 
@@ -70,6 +73,9 @@ Converts set of ReleaseNotesDataItems to ExportData - WorkItems subset.
 
 Evaluates the relations of the given work item and returns distinct
 work item states from all work items that are tested by the given work item.
+
+### [ConvertTo-HashTable](ConvertTo-HashTable.md)
+Converts PSCustomObject to hashtable.
 
 ### [ConvertTo-JsonCustom](ConvertTo-JsonCustom.md)
 Converts the given object to a JSON string as an array.
@@ -157,6 +163,12 @@ Returns a list of known API credentials registered by Add-ApiCredential or Set-A
 ### [Get-ApiProjectConnection](Get-ApiProjectConnection.md)
 Creates a connection object to a project in Azure DevOps.
 
+### [Get-ApiRetryConfig](Get-ApiRetryConfig.md)
+Gets the current global retry configuration for Azure DevOps API calls.
+
+### [Get-CachedApiProjectsList](Get-CachedApiProjectsList.md)
+Returns a list of projects currently cached in memory.
+
 ### [Get-CommitDiffsCount](Get-CommitDiffsCount.md)
 Find the closest common commit (the merge base) between base and target commits,
 and get the diff count between either the base and target commits or common and target commits.
@@ -189,10 +201,6 @@ Gets list of all changesets meeting given criteria.
 
 ### [Get-Identity](Get-Identity.md)
 Returns detail of requested identity.
-
-### [Get-KnownWorkItemRelationDescriptorsList](Get-KnownWorkItemRelationDescriptorsList.md)
-Returns a list of all known work item relationship descriptors.
-Used to manipulate work items relationships.
 
 ### [Get-Project](Get-Project.md)
 Returns detail of a given project.
@@ -233,6 +241,12 @@ Returns list of service hook subscriptions from the specified project.
 ### [Get-TagsList](Get-TagsList.md)
 Gets list of tags used on the work items in given project.
 
+### [Get-TestPlansList](Get-TestPlansList.md)
+Gets list of test plans in a given project.
+
+### [Get-TestSuitesList](Get-TestSuitesList.md)
+Gets list of test suites for a test plan.
+
 ### [Get-WorkItem](Get-WorkItem.md)
 Load details of given work items.
 
@@ -257,6 +271,10 @@ Return the list of work item ids referenced in given pull requests.
 
 ### [Get-WorkItemRefsListByTimePeriod](Get-WorkItemRefsListByTimePeriod.md)
 Return the list of work items for the release notes / change list.
+
+### [Get-WorkItemRelationDescriptorsList](Get-WorkItemRelationDescriptorsList.md)
+Returns a list of all known work item relationship descriptors.
+Used to manipulate work items relationships.
 
 ### [Get-WorkItemType](Get-WorkItemType.md)
 Extracts work item type from the given work item.
@@ -350,8 +368,17 @@ Create a new work item.
 Creates a new link descriptor between work items -
 object PSCustomObject with PSTypeName = 'PSTypeNames.AzureDevOpsApi.WorkItemRelationDescriptor'.
 
+### [Remove-WorkItemRelationDescriptor](Remove-WorkItemRelationDescriptor.md)
+Removes a single work item relationship descriptor from the cached list.
+
+### [Reset-WorkItemRelationDescriptorsList](Reset-WorkItemRelationDescriptorsList.md)
+Resets the configuration file to the default work item relationship descriptors.
+
 ### [Resolve-ApiProject](Resolve-ApiProject.md)
 Finds a project in the global cache.
+
+### [Save-WorkItemRelationDescriptorsList](Save-WorkItemRelationDescriptorsList.md)
+Saves the list of work item relationship descriptors to the configuration file.
 
 ### [Select-ByObjectProperty](Select-ByObjectProperty.md)
 Filters objects based on properties.
@@ -362,6 +389,9 @@ Return the link descriptor between work items -
 object PSCustomObject with PSTypeName = 'PSTypeNames.AzureDevOpsApi.WorkItemRelationDescriptor'.
 For information, see the New-WorkItemRelationDescriptor function.
 
+### [Set-ApiRetryConfig](Set-ApiRetryConfig.md)
+Configures global retry behavior for Azure DevOps API calls.
+
 ### [Set-ApiVariables](Set-ApiVariables.md)
 Set commonly used parameters for Azure DevOps API calls:
 $global:AzureDevOpsApi_DefaultFromDate
@@ -369,6 +399,9 @@ $global:AzureDevOpsApi_ApiVersion
 $global:AzureDevOpsApi_CollectionUri
 $global:AzureDevOpsApi_Project
 $global:AzureDevOpsApi_Token
+
+### [Set-ProjectProperty](Set-ProjectProperty.md)
+Sets properties of given project.
 
 ### [Show-ApiCredentialsList](Show-ApiCredentialsList.md)
 Displays a list of API credentials.

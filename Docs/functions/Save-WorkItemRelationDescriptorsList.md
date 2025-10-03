@@ -1,20 +1,20 @@
-﻿---
+---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
 schema: 2.0.0
 ---
 
-# Get-KnownWorkItemRelationDescriptorsList
+# Save-WorkItemRelationDescriptorsList
 
 ## SYNOPSIS
-Returns a list of all known work item relationship descriptors.
-Used to manipulate work items relationships.
+Saves the list of work item relationship descriptors to the configuration file.
 
 ## SYNTAX
 
 ```
-Get-KnownWorkItemRelationDescriptorsList [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Save-WorkItemRelationDescriptorsList [[-Descriptors] <Array>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +30,23 @@ PS C:\> {{ Add example code here }}
 {{ Add example description here }}
 
 ## PARAMETERS
+
+### -Descriptors
+The list of descriptors to save.
+If not provided, saves the current cached descriptors as defaults.
+If $null is provided, deletes the configuration file if it exists.
+
+```yaml
+Type: Array
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
@@ -53,8 +70,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## OUTPUTS
 
-### PSTypeNames.AzureDevOpsApi.WorkItemRelationDescriptor
 ## NOTES
-FollowFrom property is deliberately empty.
+Overwrites the existing configuration file.
 
 ## RELATED LINKS
