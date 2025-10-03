@@ -10,9 +10,9 @@ The AzureDevOpsApi module automatically discovers and tracks work item relations
 
 The module follows the **CMMI process template** conventions for work item relationships. Key relationship types include:
 
-- **Parent-Child**: Hierarchical relationships (Feature → Requirement → Task)
-- **Tests / TestedBy**: Test Case relationships with requirements and bugs
-- **Affects / AffectedBy**: Impact relationships between requirements
+- **Parent / Child**: Hierarchical relationships (Feature → Requirement → Task)
+- **Tests / Tested By**: Test Case relationships with requirements and bugs
+- **Affects / Affected By**: Impact relationships between requirements
 - **Predecessor / Successor**: Sequential dependencies when requirements are replaced
 
 For complete background, see:
@@ -29,15 +29,15 @@ The methodology documentation contains comprehensive examples with diagrams show
 **Demonstrates:**
 
 - Basic work item types (Feature, Requirement, Task, Test Case, Bug, Change Request)
-- Parent-Child relationships
-- Tests / TestedBy relationships
-- Affects / AffectedBy relationships
+- Parent / Child relationships
+- Tests / Tested By relationships
+- Affects / Affected By relationships
 
 **Key Scenarios:**
 
-- How Test Cases affect release notes inclusion
-- Impact of the Tests / TestedBy relationship on data collection
-- Cross-requirement relationships with Affects / AffectedBy
+- How Test Cases affect release notes inclusion.
+- Impact of the Tests / Tested By relationship on data collection.
+- Cross-requirement relationships with Affects / Affected By.
 
 ### [Feature 2.1](../../methodology/feature-2.1.md)
 
@@ -48,9 +48,9 @@ The methodology documentation contains comprehensive examples with diagrams show
 
 **Key Scenarios:**
 
-- What happens when a requirement is replaced
-- How predecessor relationships pull in successor requirements
-- Common mistake: Not updating Test Case links when creating successors
+- What happens when a requirement is replaced.
+- How predecessor relationships pull in successor requirements.
+- Common mistake: Not updating Test Case links when creating successors.
 
 ### [Feature 2.2](../../methodology/feature-2.2.md)
 
@@ -61,30 +61,29 @@ The methodology documentation contains comprehensive examples with diagrams show
 
 **Key Scenarios:**
 
-- Proper handling of requirement replacement
-- How to correctly update Test Case relationships
-- Impact on release notes when relationships are properly maintained
+- Proper handling of requirement replacement.
+- How to correctly update Test Case relationships.
+- Impact on release notes when relationships are properly maintained.
 
 ## Practical Usage
 
 When working with these relationship patterns:
 
-1. **Start from commits**: Release notes typically begin with work items associated with commits or pull requests
-2. **Follow relationships**: The module automatically follows configured relationship types
-3. **Track reasons**: Each work item tracks why it was included (PullRequest, Parent, Tests, etc.)
-4. **Review relationships**: The output shows all relationships between collected work items
+1. **Start from commits**: Release notes typically begin with work items associated with commits or pull requests.
+2. **Follow relationships**: The module automatically follows configured relationship types.
+3. **Track reasons**: Each work item tracks why it was included (PullRequest, Parent, Tests, etc.).
+4. **Review relationships**: The output shows all relationships between collected work items.
 
 ## Example Integration
 
 See how these patterns are used in practice:
 
-- [Basic Release Notes Workflow](../release-notes/01-basic-workflow.md) - Using `Add-WorkItemToReleaseNotesData`
-- [Full Script Example](../release-notes/02-full-script.md) - Complete release notes generation
+- [Basic Release Notes Workflow](../release-notes/01-basic-workflow.md) - Using `Add-WorkItemToReleaseNotesData`.
+- [Full Script Example](../release-notes/02-full-script.md) - Complete release notes generation.
 
 ## Notes
 
-- Numbers in brackets in methodology examples indicate creation order
-- Release notes generation starts from work items associated with commits
-- Relationships are tracked directionally (as shown by arrows in diagrams)
-- Parent-Child relationships are shown as dashed lines in diagrams
-- Related relationships are never tracked automatically
+- Numbers in parentheses in methodology examples indicate creation order.
+- Release notes generation starts from work items associated with commits.
+- Relationships are tracked directionally (as shown by arrows in diagrams).
+- Parent-Child relationships are shown as dashed lines in diagrams and **without** annotations for clarity.

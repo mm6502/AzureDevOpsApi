@@ -41,7 +41,7 @@ When a commit is created on the "old" Requirement 1 (#374354), the "new" Require
 |-|-|-|-|
 | 374361 | Task        | PullRequest            | Child (#374359) |
 | 374359 | Requirement | PullRequest, Parent    | Parent (#374361), Predecessor (#374360), Child (#374353) |
-| 374360 | Requirement | PullRequest, Successor | Successor (#374359), Child (#374353), TestedBy (#374363) |
+| 374360 | Requirement | PullRequest, Successor | Successor (#374359), Child (#374353), Tested By (#374363) |
 | 374353 | Feature     | PullRequest, Parent    | Parent (#374359) |
 | 374363 | Test Case   | PullRequest, Tests     | Tests (#374360) |
 
@@ -53,6 +53,6 @@ Requirement 1 (#374357) will not be in Release Notes, because it is already obso
 | ID | Type | Reasons | Relationships |
 |-|-|-|-|
 | 374362 | Task        | PullRequest         | Child (#374360) |
-| 374360 | Requirement | PullRequest, Parent | Parent (#374362), Child (#374353), TestedBy (#374363) |
+| 374360 | Requirement | PullRequest, Parent | Parent (#374362), Child (#374353), Tested By (#374363) |
 | 374353 | Feature     | PullRequest, Parent | Parent (#374360) |
 | 374363 | Test Case   | PullRequest, Tests  | Tests (#374360) |

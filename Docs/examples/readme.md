@@ -48,8 +48,8 @@ Comprehensive examples for generating release notes:
 Detailed examples of work item relationship patterns:
 
 - Parent-Child relationships
-- Tests / TestedBy relationships
-- Affects / AffectedBy relationships
+- Tests / Tested By relationships
+- Affects / Affected By relationships
 - Predecessor / Successor relationships
 - Common patterns and anti-patterns
 

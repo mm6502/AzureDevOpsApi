@@ -40,7 +40,7 @@ When a commit is created on the "old" Requirement 1 (#374354), the "new" Require
 | ID | Type | Reasons | Relationships |
 |-|-|-|-|
 | 374357 | Task        | PullRequest                      | Child (#374354) |
-| 374354 | Requirement | PullRequest, Parent, Predecessor | Parent (#374357), TestedBy (#374356), Predecessor (#374355), Child (#374352) |
+| 374354 | Requirement | PullRequest, Parent, Predecessor | Parent (#374357), Tested By (#374356), Predecessor (#374355), Child (#374352) |
 | 374356 | Test Case   | PullRequest, Tests               | Tests (#374354) |
 | 374355 | Requirement | PullRequest, Successor           | Successor (#374354), Child (#374352) |
 | 374352 | Feature     | PullRequest, Parent              | Parent (#374354) |

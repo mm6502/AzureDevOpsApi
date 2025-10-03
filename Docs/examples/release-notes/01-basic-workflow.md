@@ -21,36 +21,36 @@ Set-ApiVariables `
 $workItemIds = @(373872, 373877, 373870)
 Add-WorkItemToReleaseNotesData `
     -Reason 'PullRequest' `
-    -WorkItemId $workItemIds `
+    -WorkItem $workItemIds `
 | Format-Table 'WorkItemId', 'WorkItemType', 'Reasons', 'Relations'
 ```
 
 ## Expected Output
 
 ```text
-WorkItemId WorkItemType Reasons                         Relations
----------- ------------ -------                         ---------
-373872     Task         PullRequest                     Child (#373871)
-373877     Task         PullRequest                     Child (#373875)
-373870     Task         PullRequest                     Child (#373863)
-373871     Bug          PullRequest, Parent             Parent (#373872), TestedBy (#373869)
-373875     Requirement  PullRequest, Parent             Parent (#373877), Child (#373862), Affects (#373863)
-373863     Requirement  PullRequest, Parent, AffectedBy Parent (#373870), TestedBy (#373869), Child (#373862)
-373869     Test Case    PullRequest, Tests              Tests (#373871)
-373862     Feature      PullRequest, Parent             Parent (#373875)
+WorkItemId WorkItemType Reasons                          Relations
+---------- ------------ -------                          ---------
+373872     Task         PullRequest                      Child (#373871)
+373877     Task         PullRequest                      Child (#373875)
+373870     Task         PullRequest                      Child (#373863)
+373871     Bug          PullRequest, Parent              Parent (#373872), Tested By (#373869)
+373875     Requirement  PullRequest, Parent              Parent (#373877), Child (#373862), Affects (#373863)
+373863     Requirement  PullRequest, Parent, Affected By Parent (#373870), Tested By (#373869), Child (#373862)
+373869     Test Case    PullRequest, Tests               Tests (#373871)
+373862     Feature      PullRequest, Parent              Parent (#373875)
 ```
 
 ## Key Features
 
 1. **Automatic Relationship Discovery**: The cmdlet automatically follows relationships and collects related work items
-2. **Multiple Reasons**: Work items can be included for multiple reasons (e.g., directly from PR and as a parent)
-3. **Relationship Tracking**: All relationships between collected work items are tracked and displayed
+2. **Multiple Reasons**: Work items can be included for multiple reasons. Value of the `Reason` argument for the initiating call will be always first, and may be followed by other reasons (e.g. parent of previously added item).
+3. **Relationship Tracking**: Relationships used to discover other relevant work items are tracked and displayed. Notice #373875 in the example above has `Affects (#373863)` relation, but #373863 has no `Affected By (#373875)` relationship listed. See [Work Items Methodology](../work-items/readme.md) for more details.
 
 ## Understanding the Output
 
 - **WorkItemId**: The unique identifier of the work item
 - **WorkItemType**: The type of work item (Task, Bug, Requirement, Feature, Test Case, etc.)
-- **Reasons**: Why this work item was included (PullRequest, Parent, Tests, AffectedBy, etc.)
+- **Reasons**: Why this work item was included (PullRequest, Parent, Tests, Affected By, etc.)
 - **Relations**: Related work items and their relationship types
 
 ## Next Steps
