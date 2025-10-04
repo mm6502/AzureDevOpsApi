@@ -18,8 +18,17 @@ function Invoke-WithRetry {
             The actual delay will use exponential backoff with jitter.
 
         .PARAMETER RetryableExceptions
-            Array of exception types or HTTP status codes that should trigger a retry.
+            Array of exception types that should trigger a retry.
             Defaults to common transient error conditions.
+
+        .PARAMETER RetryableStatusCodes
+            Array of HTTP status codes that should trigger a retry.
+            Defaults to common transient error conditions.
+
+        .PARAMETER NonRetryableErrorPatterns
+            Array of error message patterns that should NOT be retried, even if the HTTP status code
+            would normally be retryable. This helps distinguish between transient server errors and
+            permanent business logic errors (like duplicate entries).
 
         .PARAMETER MaxRetryDelay
             The maximum delay in seconds between retries. Default is 30 seconds.
@@ -68,6 +77,13 @@ function Invoke-WithRetry {
             504  # Gateway Timeout
         ),
 
+        [string[]] $NonRetryableErrorPatterns = @(
+            'Cannot add duplicate',
+            'already exists',
+            'duplicate entry',
+            'unique constraint'
+        ),
+
         [ValidateRange(1, 300)]
         [double] $MaxRetryDelay = 30.0,
 
@@ -92,26 +108,21 @@ function Invoke-WithRetry {
             }
 
             return $result
-        }
-        catch {
+        } catch {
             $lastException = $_
-            $attempt++
-
-            # Check if we should retry this exception
+            $attempt++            # Check if we should retry this exception
             $shouldRetry = $false
 
-            # Check HTTP status codes for web exceptions first
+            # Check HTTP status codes for web exceptions
             $statusCode = $null
             if ($_.Exception -is [System.Net.WebException]) {
                 if ($_.Exception.Response) {
                     $statusCode = [int]$_.Exception.Response.StatusCode
                 }
-            }
-            elseif ($_.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') {
+            } elseif ($_.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') {
                 # Use type name comparison for PowerShell version compatibility
                 $statusCode = [int]$_.Exception.Response.StatusCode
-            }
-            elseif ($_.TargetObject -and $_.TargetObject.StatusCode) {
+            } elseif ($_.TargetObject -and $_.TargetObject.StatusCode) {
                 # For mock objects in tests
                 $statusCode = [int]$_.TargetObject.StatusCode
             }
@@ -131,6 +142,27 @@ function Invoke-WithRetry {
                     $shouldRetry = $true
                     Write-Verbose "Retryable exception detected: $exceptionType"
                 }
+            }
+
+            # Check if the error message contains non-retryable patterns
+            $errorMessage = $_.Exception.Message
+            if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+                $errorMessage = $_.ErrorDetails.Message
+            }
+
+            $isNonRetryablePattern = $false
+            foreach ($pattern in $NonRetryableErrorPatterns) {
+                if ($errorMessage -like "*$pattern*") {
+                    $isNonRetryablePattern = $true
+                    Write-Verbose "Non-retryable error pattern detected: '$pattern' in message: $errorMessage"
+                    break
+                }
+            }
+
+            # If we found a non-retryable pattern, don't retry regardless of status code or exception type
+            if ($shouldRetry -and $isNonRetryablePattern) {
+                Write-Verbose "Skipping retry due to non-retryable error pattern"
+                $shouldRetry = $false
             }
 
             # If this is our last attempt or the error is not retryable, throw

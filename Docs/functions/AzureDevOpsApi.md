@@ -377,6 +377,9 @@ Create a new work item.
 Creates a new link descriptor between work items -
 object PSCustomObject with PSTypeName = 'PSTypeNames.AzureDevOpsApi.WorkItemRelationDescriptor'.
 
+### [Remove-TestCaseFromTestSuite](Remove-TestCaseFromTestSuite.md)
+Removes test cases from a test suite.
+
 ### [Remove-WorkItemRelationDescriptor](Remove-WorkItemRelationDescriptor.md)
 Removes a single work item relationship descriptor from the cached list.
 
