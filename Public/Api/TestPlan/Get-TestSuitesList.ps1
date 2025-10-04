@@ -114,17 +114,9 @@ function Get-TestSuitesList {
         }
 
         # Make the call
-        $results = @(
-            Invoke-ApiListPagedWithContinuationToken `
-                -ApiCredential:$connection.ApiCredential `
-                -ApiVersion:$connection.ApiVersion `
-                -Uri:$uri
-        )
-
-        # Add TestPlanId property to each result
-        $results | ForEach-Object {
-            $_ | Add-Member -MemberType NoteProperty -Name 'TestPlanId' -Value $planId -Force
-            $_
-        }
+        Invoke-ApiListPagedWithContinuationToken `
+            -ApiCredential:$connection.ApiCredential `
+            -ApiVersion:$connection.ApiVersion `
+            -Uri:$uri
     }
 }

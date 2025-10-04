@@ -69,10 +69,8 @@ Describe 'Get-TestSuitesList' {
         $result.Count | Should -Be 2
         $result[0].id | Should -Be $expected.Suite1Id
         $result[0].name | Should -Be $expected.Suite1Name
-        $result[0].TestPlanId | Should -Be $expected.PlanId
         $result[1].id | Should -Be $expected.Suite2Id
         $result[1].name | Should -Be $expected.Suite2Name
-        $result[1].TestPlanId | Should -Be $expected.PlanId
     }
 
     It 'Should accept plan object with id property' {
@@ -99,7 +97,6 @@ Describe 'Get-TestSuitesList' {
 
         # Assert
         $result.id | Should -Be 80
-        $result.TestPlanId | Should -Be $expected.PlanId
     }
 
     It 'Should extract project from plan object' {
@@ -234,9 +231,10 @@ Describe 'Get-TestSuitesList' {
         Should -Invoke -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -Times 1
     }
 
-    It 'Should add TestPlanId property to all returned suites' {
+    It 'Should return suites with plan property' {
         # Arrange
         $testPlanId = 123
+        $testPlanName = 'Test Plan'
 
         Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith {
             return @(
@@ -244,11 +242,19 @@ Describe 'Get-TestSuitesList' {
                     id        = 1
                     name      = 'Suite 1'
                     suiteType = 'staticTestSuite'
+                    plan      = @{
+                        id   = $testPlanId
+                        name = $testPlanName
+                    }
                 },
                 [PSCustomObject]@{
                     id        = 2
                     name      = 'Suite 2'
                     suiteType = 'staticTestSuite'
+                    plan      = @{
+                        id   = $testPlanId
+                        name = $testPlanName
+                    }
                 }
             )
         }
@@ -259,8 +265,8 @@ Describe 'Get-TestSuitesList' {
         # Assert
         $result | Should -HaveCount 2
         $result | ForEach-Object {
-            $_.TestPlanId | Should -Be $testPlanId
-            $_.PSObject.Properties.Name | Should -Contain 'TestPlanId'
+            $_.plan.id | Should -Be $testPlanId
+            $_.PSObject.Properties.Name | Should -Contain 'plan'
         }
     }
 }
