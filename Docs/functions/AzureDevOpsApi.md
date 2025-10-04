@@ -247,6 +247,9 @@ Gets list of test plans in a given project.
 ### [Get-TestSuitesList](Get-TestSuitesList.md)
 Gets list of test suites for a test plan.
 
+### [Get-TestSuiteTestCasesList](Get-TestSuiteTestCasesList.md)
+Gets list of test cases for a test suite.
+
 ### [Get-WorkItem](Get-WorkItem.md)
 Load details of given work items.
 
@@ -289,6 +292,9 @@ For example, for a project detail.
 ### [Invoke-ApiListPaged](Invoke-ApiListPaged.md)
 Calls web API returning paged list of records.
 For example to list all PullRequests for a project.
+
+### [Invoke-ApiListPagedWithContinuationToken](Invoke-ApiListPagedWithContinuationToken.md)
+Calls web API returning paged list of records using continuation token pagination.
 
 ### [Invoke-CurlWebRequest](Invoke-CurlWebRequest.md)
 Using curl executable to invoke web request instead of Invoke-WebRequest.
