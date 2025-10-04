@@ -27,6 +27,9 @@ Adds or sets a query parameter in the given URI.
 ### [Add-ReleaseNotesDataItemRelation](Add-ReleaseNotesDataItemRelation.md)
 Add a link between two given Work Items.
 
+### [Add-TestCaseToTestSuite](Add-TestCaseToTestSuite.md)
+Adds test cases to a test suite.
+
 ### [Add-WorkItemRelationDescriptor](Add-WorkItemRelationDescriptor.md)
 Adds a single work item relationship descriptor to the cache.
 

@@ -1,0 +1,154 @@
+function Remove-TestCaseFromTestSuite {
+
+    <#
+        .SYNOPSIS
+            Removes test cases from a test suite.
+
+        .DESCRIPTION
+            Removes one or more test cases from a test suite using Azure DevOps Test Plans API.
+            The test case work item is not deleted from the system. See work items API to delete a test case permanently.
+
+        .PARAMETER CollectionUri
+            Url for project collection on Azure DevOps server instance.
+            If not specified, $global:AzureDevOpsApi_CollectionUri (set by Set-AzureDevopsVariables) is used.
+
+        .PARAMETER Project
+            Project name, identifier, full project URI, or object with any one
+            these properties.
+            If not specified, $global:AzureDevOpsApi_Project (set by Set-AzureDevopsVariables) is used.
+
+        .PARAMETER Plan
+            Test plan object (with id and project properties) or test plan ID.
+            When providing an object, the Project and CollectionUri are extracted from it.
+            When providing an ID, relies on Project and CollectionUri parameters or global defaults.
+            Optional if Suite object has TestPlanId property.
+
+        .PARAMETER Suite
+            Test suite object (with id and optionally TestPlanId property) or test suite ID.
+            Can be piped from Get-TestSuitesList.
+
+        .PARAMETER TestCaseId
+            Array of test case IDs to remove from the suite.
+
+        .NOTES
+            https://learn.microsoft.com/en-us/rest/api/azure/devops/testplan/test-suite-test-case/remove-test-cases-from-suite?view=azure-devops-rest-7.1
+    #>
+
+    [CmdletBinding(DefaultParameterSetName = 'FromId')]
+    param(
+        [Parameter(ParameterSetName = 'FromPipeline', Mandatory, ValueFromPipeline)]
+        [AllowNull()]
+        $InputObject,
+
+        [Parameter(ParameterSetName = 'FromId', Position = 0)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        $Project,
+
+        [Parameter(ParameterSetName = 'FromId')]
+        [AllowNull()]
+        [AllowEmptyString()]
+        $CollectionUri,
+
+        [Parameter(ParameterSetName = 'FromId', Position = 1)]
+        [Alias('PlanId', 'Id')]
+        $Plan,
+
+        [Parameter(ParameterSetName = 'FromId', Mandatory, Position = 2)]
+        [Alias('SuiteId')]
+        $Suite,
+
+        [Parameter(Mandatory, Position = 3)]
+        [Alias('TestCaseIds', 'WorkItemId', 'WorkItemIds')]
+        [int[]]
+        $TestCaseId
+    )
+
+    process {
+
+        # Handle pipeline input
+        if ($null -ne $InputObject) {
+            # Check if InputObject has plan property (indicates it's a suite object)
+            if ($InputObject -and $InputObject.plan.id) {
+                # This is a suite object with plan property
+                $Suite = $InputObject
+                $Plan = $InputObject.plan.id
+                # If suite has project property, use it
+                if ($InputObject.project) {
+                    $Project = $InputObject.project
+                }
+            } elseif ($InputObject -and $InputObject.id) {
+                # Check if it has typical plan properties (project and id without plan property)
+                if ($InputObject.project -and -not $InputObject.plan) {
+                    # Treat as plan object
+                    $Plan = $InputObject
+                } else {
+                    # Treat as suite object
+                    $Suite = $InputObject
+                }
+            } else {
+                # Otherwise treat as plan object
+                $Plan = $InputObject
+            }
+        }
+
+        # If Suite is provided and has plan property but Plan is not set, extract it
+        if ($null -eq $Plan -and $Suite -and $Suite.plan.id) {
+            $Plan = $Suite.plan.id
+        }
+
+        # Extract plan ID and project information from plan object if needed
+        $planId = $null
+        if ($null -eq $Plan) {
+            throw "Plan must be specified either directly or via a Suite object with TestPlanId property."
+        }
+
+        if ($Plan -and $Plan.project -and $Plan.id) {
+            # Use project from plan object if available
+            $Project = $Plan.project
+            # It's a plan object with an id property
+            $planId = $Plan.id
+        } elseif ($Plan -match '^\d+$') {
+            # It's a plan ID
+            $planId = [int]$Plan
+        } else {
+            throw "Plan must be a test plan object with an 'id' property or a numeric plan ID."
+        }
+
+        # Extract suite ID from suite object if needed
+        $suiteId = $null
+        if ($Suite -and $Suite.id) {
+            # It's a suite object with an id property
+            $suiteId = $Suite.id
+        } elseif ($Suite -match '^\d+$') {
+            # It's a suite ID
+            $suiteId = [int]$Suite
+        } else {
+            throw "Suite must be a test suite object with an 'id' property or a numeric suite ID."
+        }
+
+        # Get connection to project
+        $connection = Get-ApiProjectConnection `
+            -CollectionUri $CollectionUri `
+            -Project $Project
+
+        # 7.0+
+        # DELETE https://dev.azure.com/{organization}/{project}/_apis/testplan/Plans/{planId}/Suites/{suiteId}/TestCase?testCaseIds={testCaseIds}&api-version=7.0
+        $uri = Join-Uri `
+            -Base $connection.ProjectBaseUri `
+            -Relative "_apis/testplan/Plans/$($planId)/Suites/$($suiteId)/TestCase?testCaseIds=$($TestCaseId -join ',')" `
+            -NoTrailingSlash
+
+        # Ensure we use at least API version 5.1 for this endpoint
+        if ($connection.ApiVersion -lt [version]'7.0') {
+            $connection.ApiVersion = [version]'7.0'
+        }
+
+        # Make the call
+        Invoke-Api `
+            -ApiCredential:$connection.ApiCredential `
+            -ApiVersion:$connection.ApiVersion `
+            -Uri:$uri `
+            -Method:DELETE
+    }
+}
