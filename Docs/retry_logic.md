@@ -17,6 +17,28 @@ The module uses intelligent retry strategies:
 - **Jitter** - adds randomization to prevent thundering herd effects
 - **Maximum delay caps** - prevents excessively long waits
 
+## Enhanced Error Messages
+
+The module automatically parses JSON error responses from Azure DevOps API to provide meaningful error messages. When an API call fails, the module:
+
+1. **Extracts JSON error details** - Parses error responses to find the actual error message
+2. **Displays user-friendly messages** - Shows the meaningful error text instead of raw HTTP errors
+3. **Preserves error context** - Maintains original error information for debugging
+
+### Example Error Enhancement
+
+Instead of seeing raw JSON in error messages like:
+```
+{"$id": "1", "message": "Cannot add duplicate test case to suite.", "typeName": "System.Exception"}
+```
+
+You'll see a clean error message:
+```
+Cannot add duplicate test case to suite.
+```
+
+This enhancement works automatically for all API calls and doesn't require any configuration changes.
+
 ## Configuring Retry Behavior
 
 ### Retry Conditions

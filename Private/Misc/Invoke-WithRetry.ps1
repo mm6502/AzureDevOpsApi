@@ -164,7 +164,6 @@ function Invoke-WithRetry {
                 Write-Verbose "Skipping retry due to non-retryable error pattern"
                 $shouldRetry = $false
             }
-
             # If this is our last attempt or the error is not retryable, throw
             if ($attempt -gt $RetryCount -or -not $shouldRetry) {
                 if (-not $shouldRetry) {
@@ -172,7 +171,14 @@ function Invoke-WithRetry {
                 } else {
                     Write-Verbose "Maximum retry attempts ($RetryCount) exceeded"
                 }
-                throw $lastException
+
+                # Use Assert-HttpResponse to parse JSON error messages for better error details
+                try {
+                    Assert-HttpResponse -ErrorRecord $lastException
+                } catch {
+                    # If Assert-HttpResponse fails or doesn't apply, throw the original exception
+                    throw $lastException
+                }
             }
 
             # Calculate delay for next attempt

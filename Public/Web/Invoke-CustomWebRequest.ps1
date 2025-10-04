@@ -231,18 +231,9 @@ function Invoke-CustomWebRequest {
         }
 
         # Execute the web request with retry logic (if enabled)
-        if ($DisableRetry.IsPresent -and $DisableRetry -eq $true) {
-            # No retry logic - execute directly
-            if ($useInvokeWebRequest) {
-                # Always disable progress bars
-                $ProgressPreference = 'SilentlyContinue'
-                $response = Invoke-WebRequest @params
-            } else {
-                $response = Invoke-CurlWebRequest $params
-            }
-        } else {
-            # Use retry logic
-            $response = Invoke-WithRetry -ScriptBlock {
+        try {
+
+            $scriptblock = {
                 if ($useInvokeWebRequest) {
                     # Always disable progress bars
                     $ProgressPreference = 'SilentlyContinue'
@@ -250,11 +241,23 @@ function Invoke-CustomWebRequest {
                 } else {
                     Invoke-CurlWebRequest $params
                 }
-            } -RetryCount $RetryCount `
-              -RetryDelay $RetryDelay `
-              -MaxRetryDelay $global:AzureDevOpsApi_RetryConfig.MaxRetryDelay `
-              -UseExponentialBackoff $global:AzureDevOpsApi_RetryConfig.UseExponentialBackoff `
-              -UseJitter $global:AzureDevOpsApi_RetryConfig.UseJitter
+            }
+
+            if ($DisableRetry.IsPresent -and $DisableRetry -eq $true) {
+                & $scriptblock
+            } else {
+                # Use retry logic
+                $response = Invoke-WithRetry `
+                    -ScriptBlock $scriptblock `
+                    -RetryCount $RetryCount `
+                    -RetryDelay $RetryDelay `
+                    -MaxRetryDelay $global:AzureDevOpsApi_RetryConfig.MaxRetryDelay `
+                    -UseExponentialBackoff $global:AzureDevOpsApi_RetryConfig.UseExponentialBackoff `
+                    -UseJitter $global:AzureDevOpsApi_RetryConfig.UseJitter
+            }
+        } catch {
+            # Use Assert-HttpResponse to parse JSON error messages and provide better error details
+            Assert-HttpResponse -ErrorRecord $_
         }
 
         # Return the response
