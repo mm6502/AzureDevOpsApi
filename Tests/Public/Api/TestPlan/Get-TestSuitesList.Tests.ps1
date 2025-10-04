@@ -45,7 +45,7 @@ Describe 'Get-TestSuitesList' {
             Suite2Name  = 'Static Suite 1'
         }
 
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith {
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith {
             return @(
                 @{
                     id        = $expected.Suite1Id
@@ -69,8 +69,10 @@ Describe 'Get-TestSuitesList' {
         $result.Count | Should -Be 2
         $result[0].id | Should -Be $expected.Suite1Id
         $result[0].name | Should -Be $expected.Suite1Name
+        $result[0].TestPlanId | Should -Be $expected.PlanId
         $result[1].id | Should -Be $expected.Suite2Id
         $result[1].name | Should -Be $expected.Suite2Name
+        $result[1].TestPlanId | Should -Be $expected.PlanId
     }
 
     It 'Should accept plan object with id property' {
@@ -84,7 +86,7 @@ Describe 'Get-TestSuitesList' {
             }
         }
 
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith {
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith {
             return @{
                 id        = 80
                 name      = 'Suite 1'
@@ -97,6 +99,7 @@ Describe 'Get-TestSuitesList' {
 
         # Assert
         $result.id | Should -Be 80
+        $result.TestPlanId | Should -Be $expected.PlanId
     }
 
     It 'Should extract project from plan object' {
@@ -114,7 +117,7 @@ Describe 'Get-TestSuitesList' {
             $script:capturedProject = $Project
             return $expected.Connection
         }
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith { }
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith { }
 
         # Act
         Get-TestSuitesList -Plan $planObject
@@ -131,7 +134,7 @@ Describe 'Get-TestSuitesList' {
             project = 'MyProject'
         }
 
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith {
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith {
             return @{
                 id   = 80
                 name = 'Suite 1'
@@ -159,7 +162,7 @@ Describe 'Get-TestSuitesList' {
 
     It 'Should handle null or empty Project' {
         # Arrange
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith { }
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith { }
 
         # Act & Assert
         { Get-TestSuitesList -Project $null -Plan $expected.PlanId } | Should -Not -Throw
@@ -168,7 +171,7 @@ Describe 'Get-TestSuitesList' {
 
     It 'Should handle custom CollectionUri' {
         # Arrange
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith { }
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith { }
 
         # Act & Assert
         { Get-TestSuitesList `
@@ -186,7 +189,7 @@ Describe 'Get-TestSuitesList' {
             $Parameters['expand'] | Should -Be $expectedExpand
             return $Uri
         }
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith { }
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith { }
 
         # Act
         Get-TestSuitesList -Project 'myproject' -Plan $expected.PlanId -Expand $expectedExpand
@@ -202,7 +205,7 @@ Describe 'Get-TestSuitesList' {
             $Parameters['asTreeView'] | Should -Be $true
             return $Uri
         }
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith { }
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith { }
 
         # Act
         Get-TestSuitesList -Project 'myproject' -Plan $expected.PlanId -AsTreeView
@@ -216,27 +219,10 @@ Describe 'Get-TestSuitesList' {
         { Get-TestSuitesList -Project 'myproject' -Plan $expected.PlanId -Expand 'InvalidValue' } | Should -Throw
     }
 
-    It 'Should pass Top and Skip parameters' {
-        # Arrange
-        $expectedTop = 50
-        $expectedSkip = 100
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith {
-            param($Uri, $ApiCredential, $ApiVersion, $Top, $Skip, $AsHashTable)
-            $Top | Should -Be $expectedTop
-            $Skip | Should -Be $expectedSkip
-        }
-
-        # Act
-        Get-TestSuitesList -Project 'myproject' -Plan $expected.PlanId -Top $expectedTop -Skip $expectedSkip
-
-        # Assert
-        Should -Invoke -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -Times 1
-    }
-
     It 'Should construct correct URI with Plan ID' {
         # Arrange
-        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -MockWith {
-            param($Uri, $ApiCredential, $ApiVersion, $Top, $Skip, $AsHashTable)
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith {
+            param($Uri, $ApiCredential, $ApiVersion)
             # Verify the URI contains the PlanId
             $Uri | Should -Match "_apis/testplan/Plans/$($expected.PlanId)/suites"
         }
@@ -245,6 +231,36 @@ Describe 'Get-TestSuitesList' {
         Get-TestSuitesList -Project 'myproject' -Plan $expected.PlanId
 
         # Assert
-        Should -Invoke -ModuleName $ModuleName -CommandName Invoke-ApiListPaged -Times 1
+        Should -Invoke -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -Times 1
+    }
+
+    It 'Should add TestPlanId property to all returned suites' {
+        # Arrange
+        $testPlanId = 123
+
+        Mock -ModuleName $ModuleName -CommandName Invoke-ApiListPagedWithContinuationToken -MockWith {
+            return @(
+                [PSCustomObject]@{
+                    id        = 1
+                    name      = 'Suite 1'
+                    suiteType = 'staticTestSuite'
+                },
+                [PSCustomObject]@{
+                    id        = 2
+                    name      = 'Suite 2'
+                    suiteType = 'staticTestSuite'
+                }
+            )
+        }
+
+        # Act
+        $result = Get-TestSuitesList -Project 'myproject' -Plan $testPlanId
+
+        # Assert
+        $result | Should -HaveCount 2
+        $result | ForEach-Object {
+            $_.TestPlanId | Should -Be $testPlanId
+            $_.PSObject.Properties.Name | Should -Contain 'TestPlanId'
+        }
     }
 }

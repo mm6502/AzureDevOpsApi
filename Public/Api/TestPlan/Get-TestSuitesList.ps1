@@ -29,16 +29,11 @@ function Get-TestSuitesList {
         .PARAMETER AsTreeView
             If the suites returned should be in a tree structure.
 
-        .PARAMETER Top
-            Count of records per page.
-
-        .PARAMETER Skip
-            Count of records to skip before returning the $Top count of records.
-            If not specified, iterates the request with increasing $Skip by $Top,
-            while records are being returned.
-
         .NOTES
             https://learn.microsoft.com/en-us/rest/api/azure/devops/testplan/test-suites/get-test-suites-for-plan?view=azure-devops-rest-7.1
+
+            This API uses continuation token pagination. The function automatically iterates through
+            all pages using the x-ms-continuationtoken response header.
     #>
 
     [CmdletBinding(DefaultParameterSetName = 'FromId')]
@@ -58,7 +53,7 @@ function Get-TestSuitesList {
         $CollectionUri,
 
         [Parameter(ParameterSetName = 'FromId', Mandatory, Position = 1)]
-        [Alias('PlanId', 'Id')]
+        [Alias('TestPlan','TestPlanId', 'PlanId', 'Id')]
         $Plan,
 
         [ValidateSet('None', 'Children', 'DefaultTesters')]
@@ -66,11 +61,7 @@ function Get-TestSuitesList {
         $Expand,
 
         [switch]
-        $AsTreeView,
-
-        $Top,
-
-        $Skip
+        $AsTreeView
     )
 
     process {
@@ -102,7 +93,7 @@ function Get-TestSuitesList {
         # GET https://dev.azure.com/{organization}/{project}/_apis/testplan/Plans/{planId}/suites?api-version=7.1
         $uri = Join-Uri `
             -Base $connection.ProjectBaseUri `
-            -Relative "_apis/testplan/Plans/$planId/suites" `
+            -Relative "_apis/testplan/Plans/$($planId)/suites" `
             -NoTrailingSlash
 
         # Add optional query parameters
@@ -123,11 +114,17 @@ function Get-TestSuitesList {
         }
 
         # Make the call
-        Invoke-ApiListPaged `
-            -ApiCredential:$connection.ApiCredential `
-            -ApiVersion:$connection.ApiVersion `
-            -Uri:$uri `
-            -Top:$Top `
-            -Skip:$Skip
+        $results = @(
+            Invoke-ApiListPagedWithContinuationToken `
+                -ApiCredential:$connection.ApiCredential `
+                -ApiVersion:$connection.ApiVersion `
+                -Uri:$uri
+        )
+
+        # Add TestPlanId property to each result
+        $results | ForEach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name 'TestPlanId' -Value $planId -Force
+            $_
+        }
     }
 }

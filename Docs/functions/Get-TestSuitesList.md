@@ -1,4 +1,4 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
@@ -15,13 +15,13 @@ Gets list of test suites for a test plan.
 ### FromId (Default)
 ```
 Get-TestSuitesList [[-Project] <Object>] [-CollectionUri <Object>] [-Plan] <Object> [-Expand <String>]
- [-AsTreeView] [-Top <Object>] [-Skip <Object>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-AsTreeView] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FromPipeline
 ```
-Get-TestSuitesList -InputObject <Object> [-Expand <String>] [-AsTreeView] [-Top <Object>] [-Skip <Object>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-TestSuitesList -InputObject <Object> [-Expand <String>] [-AsTreeView] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -109,7 +109,7 @@ When providing an ID, relies on Project and CollectionUri parameters or global d
 ```yaml
 Type: Object
 Parameter Sets: FromId
-Aliases: PlanId, Id
+Aliases: TestPlan, TestPlanId, PlanId, Id
 
 Required: True
 Position: 2
@@ -145,38 +145,6 @@ Aliases:
 
 Required: False
 Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Top
-Count of records per page.
-
-```yaml
-Type: Object
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Skip
-Count of records to skip before returning the $Top count of records.
-If not specified, iterates the request with increasing $Skip by $Top,
-while records are being returned.
-
-```yaml
-Type: Object
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
