@@ -244,6 +244,9 @@ Returns list of service hook subscriptions from the specified project.
 ### [Get-TagsList](Get-TagsList.md)
 Gets list of tags used on the work items in given project.
 
+### [Get-TcmTestCase](Get-TcmTestCase.md)
+Retrieves test case data from YAML files.
+
 ### [Get-TestPlansList](Get-TestPlansList.md)
 Gets list of test plans in a given project.
 
@@ -362,6 +365,12 @@ Creates a new entry in both the download list and the release note data list.
 ### [New-ReleaseNotesDataItemRelation](New-ReleaseNotesDataItemRelation.md)
 Creates a new object for recording the session/relationship with other work items.
 
+### [New-TcmConfig](New-TcmConfig.md)
+Creates a new TestCaseManagement configuration file (.tcm-config.yaml).
+
+### [New-TcmTestCase](New-TcmTestCase.md)
+Creates a new test case YAML file with the specified properties.
+
 ### [New-WebException](New-WebException.md)
 Creates a new web exception object with a custom status code, reason phrase, and message.
 
@@ -388,6 +397,9 @@ Resets the configuration file to the default work item relationship descriptors.
 
 ### [Resolve-ApiProject](Resolve-ApiProject.md)
 Finds a project in the global cache.
+
+### [Resolve-TcmTestCaseConflict](Resolve-TcmTestCaseConflict.md)
+Resolves synchronization conflicts for test cases.
 
 ### [Save-WorkItemRelationDescriptorsList](Save-WorkItemRelationDescriptorsList.md)
 Saves the list of work item relationship descriptors to the configuration file.
@@ -430,6 +442,15 @@ Splits the given URI of an Azure DevOps collection into the collection URI and t
 
 ### [Submit-PullRequests](Submit-PullRequests.md)
 Submits pull requests for the specified repositories and branches.
+
+### [Sync-TcmTestCase](Sync-TcmTestCase.md)
+Synchronizes test cases between local YAML files and Azure DevOps.
+
+### [Sync-TcmTestCaseFromRemote](Sync-TcmTestCaseFromRemote.md)
+Pulls test case(s) from Azure DevOps to local YAML files.
+
+### [Sync-TcmTestCaseToRemote](Sync-TcmTestCaseToRemote.md)
+Pushes a local test case to Azure DevOps.
 
 ### [Test-DateTimeRange](Test-DateTimeRange.md)
 Decides whether given $Value is in range \<$From, $To\>.

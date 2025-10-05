@@ -12,6 +12,7 @@ Key features:
 - List and inspect repositories, commits and diffs.
 - Retrieve pull requests and their statuses.
 - Export release notes data to Excel and Markdown.
+- Manage test cases with YAML file support.
 
 Compatibility:
 
@@ -31,6 +32,7 @@ Install the module and its prerequisites from the PowerShell Gallery (this is a 
 
 ```powershell
 Install-Module -Name ImportExcel -AllowClobber
+Install-Module -Name powershell-yaml -AllowClobber
 Install-Module -Name AzureDevOpsApi -AllowClobber
 ```
 

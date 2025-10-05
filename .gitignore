@@ -13,3 +13,6 @@ coverage.xml
 
 # Output of PlatyPS documentation generator
 docs.log
+
+# Ignore sync TestCase files
+TestCases/

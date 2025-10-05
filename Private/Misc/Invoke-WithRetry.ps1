@@ -200,7 +200,7 @@ function Invoke-WithRetry {
             $delay = [Math]::Min($delay, $MaxRetryDelay)
 
             Write-Verbose "Retrying in $([Math]::Round($delay, 2)) seconds (attempt $attempt of $RetryCount)"
-            Write-Warning "Operation failed, retrying in $([Math]::Round($delay, 2)) seconds. Error: $($_.Exception.Message)"
+            Write-Verbose "Operation failed, retrying in $([Math]::Round($delay, 2)) seconds. Error: $($_.Exception.Message)"
 
             # Wait before retrying
             Start-Sleep -Seconds $delay

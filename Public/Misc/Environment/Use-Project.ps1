@@ -12,15 +12,15 @@ function Use-Project {
     param(
         [AllowNull()]
         [AllowEmptyString()]
-        [Alias('Value')]
-        $Project
+        [Alias('Project')]
+        $Value
     )
 
     process {
-        if (!$Project) {
-            $Project = $global:AzureDevOpsApi_Project
+        if (!$Value) {
+            $Value = $global:AzureDevOpsApi_Project
         }
 
-        return $Project
+        return $Value
     }
 }

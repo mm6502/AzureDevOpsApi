@@ -14,7 +14,7 @@ If not specified, $global:AzureDevOpsApi_Project (set by Set-AzureDevopsVariable
 ## SYNTAX
 
 ```
-Use-Project [[-Project] <Object>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Use-Project [[-Value] <Object>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -46,13 +46,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Project
-Name, identifier of a project in the $Collection.
+### -Value
+{{ Fill Value Description }}
 
 ```yaml
 Type: Object
 Parameter Sets: (All)
-Aliases: Value
+Aliases: Project
 
 Required: False
 Position: 1

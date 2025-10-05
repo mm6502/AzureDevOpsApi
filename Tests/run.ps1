@@ -26,7 +26,7 @@ if ($Verbose.IsPresent -and $Verbose -eq $true) {
     $Verbose = $true
 }
 
-$WithCodeCoverage = -not ($SkipCodeCoverage.IsPresent -and ($SkipCodeCoverage -ne $true))
+$WithCodeCoverage = -not ($SkipCodeCoverage.IsPresent -and ($SkipCodeCoverage -eq $true))
 
 function Show-CodeCoverageResult {
     [CmdletBinding()]

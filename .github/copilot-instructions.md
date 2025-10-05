@@ -4,7 +4,7 @@
 
     - PowerShell module.
     - Root files: `AzureDevOpsApi.psd1`, `AzureDevOpsApi.psm1`.
-    - Dependency: `ImportExcel` (in `RequiredModules`).
+    - Dependencies: `ImportExcel`, `powershell-yaml` (in `RequiredModules`).
 
 - Key dirs:
 
@@ -37,6 +37,7 @@
 
 - Coding:
 
+    - **Important:** Always reload the module before trying new code to ensure changes are applied. Use: `Import-Module .\AzureDevOpsApi.psd1 -ArgumentList @($true) -Force`
     - Use spaces for indentation (4 spaces).
     - When calling functions with more than 3 parameters (and not using splatting), use multiline
       formatting for readability, e.g.:
@@ -57,3 +58,4 @@
             . (Join-Path -Path $PSScriptRoot -ChildPath '.\BeforeAll.ps1')
         }
         ```
+

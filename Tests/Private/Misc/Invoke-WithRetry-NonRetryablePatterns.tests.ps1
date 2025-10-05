@@ -6,20 +6,20 @@
 param()
 
 BeforeAll {
-    . (Join-Path -Path $PSScriptRoot -ChildPath '..\..\BeforeAll.ps1')
+    . (Join-Path -Path $PSScriptRoot -ChildPath '..\BeforeAll.ps1')
 }
 
 Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
 
     BeforeEach {
         # Reset any global state
-        $global:TestCallCount = 0
+        $script:TestCallCount = 0
     }
 
     It 'Should not retry when error message contains "Cannot add duplicate" pattern' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
+            $script:TestCallCount++
             # Create a mock target object with StatusCode property for testing
             $mockTarget = [PSCustomObject]@{
                 StatusCode = 500
@@ -40,13 +40,13 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
         } | Should -Throw -ExpectedMessage "*Cannot add duplicate*"
 
         # Should only be called once (no retries) - this verifies the pattern was detected in ErrorDetails.Message
-        $global:TestCallCount | Should -Be 1
+        $script:TestCallCount | Should -Be 1
     }
 
     It 'Should not retry when error message contains "already exists" pattern' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
+            $script:TestCallCount++
             $mockTarget = [PSCustomObject]@{
                 StatusCode = 500
             }
@@ -65,13 +65,13 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
         } | Should -Throw -ExpectedMessage "*already exists*"
 
         # Should only be called once (no retries)
-        $global:TestCallCount | Should -Be 1
+        $script:TestCallCount | Should -Be 1
     }
 
     It 'Should not retry when error message contains "duplicate entry" pattern' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
+            $script:TestCallCount++
             $mockTarget = [PSCustomObject]@{
                 StatusCode = 500
             }
@@ -90,13 +90,13 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
         } | Should -Throw -ExpectedMessage "*duplicate entry*"
 
         # Should only be called once (no retries)
-        $global:TestCallCount | Should -Be 1
+        $script:TestCallCount | Should -Be 1
     }
 
     It 'Should not retry when error message contains "unique constraint" pattern' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
+            $script:TestCallCount++
             $mockTarget = [PSCustomObject]@{
                 StatusCode = 500
             }
@@ -115,14 +115,14 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
         } | Should -Throw -ExpectedMessage "*unique constraint*"
 
         # Should only be called once (no retries)
-        $global:TestCallCount | Should -Be 1
+        $script:TestCallCount | Should -Be 1
     }
 
     It 'Should retry normal HTTP 500 errors that do not match non-retryable patterns' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
-            if ($global:TestCallCount -lt 3) {
+            $script:TestCallCount++
+            if ($script:TestCallCount -lt 3) {
                 $mockTarget = [PSCustomObject]@{
                     StatusCode = 500
                 }
@@ -134,7 +134,7 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
                 )
                 throw $errorRecord
             }
-            return "Success on attempt $global:TestCallCount"
+            return "Success on attempt $script:TestCallCount"
         }
 
         # Act
@@ -142,13 +142,13 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
 
         # Assert
         $result | Should -Be "Success on attempt 3"
-        $global:TestCallCount | Should -Be 3
+        $script:TestCallCount | Should -Be 3
     }
 
     It 'Should check ErrorDetails.Message when available' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
+            $script:TestCallCount++
             $errorRecord = [System.Management.Automation.ErrorRecord]::new(
                 [System.Exception]::new("Generic exception message"),
                 "TestError",
@@ -165,14 +165,14 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
         } | Should -Throw -ExpectedMessage "*Generic exception message*"
 
         # Should only be called once (no retries) - this verifies the pattern was detected in ErrorDetails.Message
-        $global:TestCallCount | Should -Be 1
+        $script:TestCallCount | Should -Be 1
     }
 
     It 'Should use custom NonRetryableErrorPatterns when provided' {
         # Arrange
         $customPatterns = @('custom error pattern', 'another pattern')
         $scriptBlock = {
-            $global:TestCallCount++
+            $script:TestCallCount++
             $mockTarget = [PSCustomObject]@{
                 StatusCode = 500
             }
@@ -191,14 +191,14 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
         } | Should -Throw -ExpectedMessage "*custom error pattern*"
 
         # Should only be called once (no retries)
-        $global:TestCallCount | Should -Be 1
+        $script:TestCallCount | Should -Be 1
     }
 
     It 'Should still retry when error message does not match any non-retryable patterns' {
         # Arrange
         $scriptBlock = {
-            $global:TestCallCount++
-            if ($global:TestCallCount -lt 2) {
+            $script:TestCallCount++
+            if ($script:TestCallCount -lt 2) {
                 $mockTarget = [PSCustomObject]@{
                     StatusCode = 500
                 }
@@ -218,6 +218,6 @@ Describe 'Invoke-WithRetry NonRetryableErrorPatterns' {
 
         # Assert
         $result | Should -Be "Success"
-        $global:TestCallCount | Should -Be 2
+        $script:TestCallCount | Should -Be 2
     }
 }

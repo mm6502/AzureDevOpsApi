@@ -27,11 +27,9 @@
     CompanyName       = 'n/a'
 
     # Copyright statement for this module
-    Copyright         = '(c) 2024, 2025; All rights reserved.'
-
-    # Description of the functionality provided by this module
+    Copyright         = '(c) 2024, 2025; All rights reserved.'    # Description of the functionality provided by this module
     Description       = 'Provides functionality to interact with the Azure DevOps REST APIs.
-It allows querying work items and creating release notes.'
+It allows querying work items, creating release notes, and managing test cases with YAML support.'
 
     # Minimum version of the PowerShell engine required by this module
     PowerShellVersion = '5.1'
@@ -51,10 +49,8 @@ It allows querying work items and creating release notes.'
     # ClrVersion = ''
 
     # Processor architecture (None, X86, Amd64) required by this module
-    # ProcessorArchitecture = ''
-
-    # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules = @()
+    # ProcessorArchitecture = ''    # Modules that must be imported into the global environment prior to importing this module
+    RequiredModules = @('powershell-yaml')
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
@@ -128,10 +124,8 @@ It allows querying work items and creating release notes.'
             # Prerelease = ''
 
             # Flag to indicate whether the module requires explicit user acceptance for install/update/save
-            # RequireLicenseAcceptance = $false
-
-            # External dependent modules of this module
-            ExternalModuleDependencies = @('ImportExcel')
+            # RequireLicenseAcceptance = $false            # External dependent modules of this module
+            ExternalModuleDependencies = @('ImportExcel', 'powershell-yaml')
 
         } # End of PSData hashtable
 

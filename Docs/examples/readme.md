@@ -8,6 +8,7 @@ This directory contains practical examples demonstrating how to use the AzureDev
 |----------|-------------|------------|
 | Basic Usage | Quick start and fundamental operations | ⭐ Beginner |
 | Credentials | Multi-instance credential management | ⭐⭐ Intermediate |
+| TestCaseManagement | YAML-based test case authoring and sync | ⭐⭐ Intermediate |
 | Release Notes | Automated release notes generation | ⭐⭐⭐ Advanced |
 | Work Items | Relationship patterns and methodology | ⭐⭐⭐ Advanced |
 
@@ -33,6 +34,18 @@ Learn how to manage multiple Azure DevOps connections:
 - URL-based credential selection
 
 **Essential for working with multiple Azure DevOps instances.**
+
+### [TestCaseManagement](./test-case-management/)
+
+Learn how to author and synchronize test cases with Azure DevOps:
+
+- Creating and configuring
+- Authoring test cases as YAML files
+- Understanding directory structure
+- Bidirectional synchronization
+- Handling sync conflicts
+
+**Perfect for managing test cases in version control with Azure DevOps sync.**
 
 ### [Release Notes Generation](./release-notes/)
 

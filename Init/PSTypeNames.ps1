@@ -14,5 +14,9 @@ $global:PSTypeNames = [PSCustomObject] @{
         ExportDataRelationItem       = 'PSTypeNames.AzureDevOpsApi.ExportDataRelationItem'
         ExportData                   = 'PSTypeNames.AzureDevOpsApi.ExportData'
         ApiWitPatchDocument          = 'PSTypeNames.AzureDevOpsApi.ApiWitPatchDocument'
+
+        # Test Case Management
+        TcmTestCaseFileInput  = 'PSTypeNames.AzureDevOpsApi.TcmTestCaseFileInput'
+        TcmTestCase           = 'PSTypeNames.AzureDevOpsApi.TcmTestCase'
     }
 }
