@@ -12,7 +12,7 @@
     RootModule        = 'AzureDevOpsApi.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '0.2.9'
+    ModuleVersion     = '0.3.0'
 
 	# Supported PSEditions
 	CompatiblePSEditions = @('Desktop', 'Core')
@@ -50,7 +50,7 @@ It allows querying work items, creating release notes, and managing test cases w
 
     # Processor architecture (None, X86, Amd64) required by this module
     # ProcessorArchitecture = ''    # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules = @('powershell-yaml')
+    RequiredModules = @()
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
@@ -111,13 +111,11 @@ It allows querying work items, creating release notes, and managing test cases w
 
             # ReleaseNotes of this module
             ReleaseNotes = '
-- Reworked Work Item Relation Descriptors functionality
-  - `Get-DefaultWorkItemRelationDescriptorsList`
-  - `Get-WorkItemRelationDescriptorsList`
-  - `Add-WorkItemRelationDescriptor`
-  - `Remove-WorkItemRelationDescriptor`
-  - `Reset-WorkItemRelationDescriptorsList`
-  - `Save-WorkItemRelationDescriptorsList`
+Add Test Case Management feature with sync workflow and comprehensive tests
+
+- Add 7 public TCM cmdlets: New-TcmConfig, New-TcmTestCase, Get-TcmTestCase, Sync-TcmTestCase, Sync-TcmTestCaseFromRemote, Sync-TcmTestCaseToRemote, Resolve-TcmTestCaseConflict
+- Add comprehensive Pester tests for all TCM functions (11 test files)
+- Add 6 detailed example guides covering setup, creation, organization, sync workflows, conflict resolution, and advanced scenarios
 '
 
             # Prerelease string of this module
