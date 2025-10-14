@@ -53,6 +53,12 @@ function Resolve-TcmTestCaseSyncStatus {
         $localExists = $null -ne $InputObject.LocalData
         $remoteExists = $null -ne $InputObject.RemoteData
 
+        # If local file doesn't exist but cache entry does, invalidate cache (file was deleted)
+        if (-not $localExists -and $cachedEntry) {
+            Write-Verbose "Cache entry exists for test case '$Id' but local file is missing - invalidating cache entry"
+            $cachedEntry = $null
+        }
+
         # Case 1: No local and no remote = new-local (shouldn't happen with numeric ID)
         if (-not $localExists -and -not $remoteExists) {
             $InputObject.SyncStatus = "new-local"

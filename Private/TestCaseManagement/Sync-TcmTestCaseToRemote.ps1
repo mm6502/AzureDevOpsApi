@@ -65,6 +65,7 @@ function Sync-TcmTestCaseToRemote {
 
         $testCaseData = $InputObject.LocalData
         $Id = if ($InputObject.Id) { $InputObject.Id } else { $testCaseData.id }
+        $localPath = $InputObject.FilePath
 
         try {
             # Display message if provided
