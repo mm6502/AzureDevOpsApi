@@ -133,7 +133,8 @@ function Sync-TcmTestCaseToRemote {
                     $remoteWorkItem = Get-WorkItem `
                         -WorkItem $Id `
                         -CollectionUri $collectionUri `
-                        -Project $project `-ErrorAction Stop
+                        -Project $project `
+                        -ErrorAction Stop
                 } catch {
                     # Work item doesn't exist - will create it below
                     Write-Verbose "Work item $Id not found, will create new work item"

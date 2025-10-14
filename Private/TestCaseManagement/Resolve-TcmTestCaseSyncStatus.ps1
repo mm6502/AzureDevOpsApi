@@ -47,11 +47,13 @@ function Resolve-TcmTestCaseSyncStatus {
 
         # Load hash cache
         $hashCache = Get-TcmHashCache -TestCasesRoot $Config.TestCasesRoot
-        $cachedEntry = $hashCache[$Id]
+        $cachedEntry = $hashCache["$Id"]  # Convert to string for hashtable lookup
 
         # Check what data exists (already loaded by Get-TcmTestCase)
         $localExists = $null -ne $InputObject.LocalData
         $remoteExists = $null -ne $InputObject.RemoteData
+
+        Write-Verbose "Resolve-TcmTestCaseSyncStatus for '$Id': localExists=$localExists, remoteExists=$remoteExists, cachedEntry=$($null -ne $cachedEntry)"
 
         # If local file doesn't exist but cache entry does, invalidate cache (file was deleted)
         if (-not $localExists -and $cachedEntry) {
