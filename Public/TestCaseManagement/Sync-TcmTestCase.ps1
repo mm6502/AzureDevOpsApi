@@ -6,6 +6,7 @@ function Sync-TcmTestCase {
         .DESCRIPTION
             Synchronizes test case data between local YAML files and Azure DevOps work items.
             Supports bidirectional synchronization, push-only, and pull-only operations.
+            Also supports git-like syntax with -Push, -Pull, and -Force switches.
             Automatically detects sync status and handles conflicts based on the specified resolution strategy.
 
             The function compares content hashes to determine if local and remote versions differ,
@@ -36,6 +37,15 @@ function Sync-TcmTestCase {
             - RemoteWins: Use remote version, overwrite local
             - LatestWins: Use the version with the most recent modification date
 
+        .PARAMETER Push
+            Git-style switch to push local changes to Azure DevOps. Equivalent to -Direction ToRemote -ConflictResolution Manual. Use with -Force to set -ConflictResolution LocalWins.
+
+        .PARAMETER Pull
+            Git-style switch to pull changes from Azure DevOps. Equivalent to -Direction FromRemote -ConflictResolution Manual. Use with -Force to set -ConflictResolution RemoteWins.
+
+        .PARAMETER Force
+            When used with -Push or -Pull, forces the sync by choosing the respective version in case of conflicts.
+
         .PARAMETER WhatIf
             Shows what would happen if the cmdlet runs without actually performing the sync operations.
 
@@ -64,6 +74,21 @@ function Sync-TcmTestCase {
 
             Synchronizes all test cases bidirectionally using default settings.
 
+        .EXAMPLE
+            PS C:\> Sync-TcmTestCase -Push
+
+            Pushes all local changes to Azure DevOps using manual conflict resolution.
+
+        .EXAMPLE
+            PS C:\> Sync-TcmTestCase -Pull -Force
+
+            Pulls all changes from Azure DevOps, using remote version in case of conflicts.
+
+        .EXAMPLE
+            PS C:\> Sync-TcmTestCase -InputObject "TC001" -Push -Force
+
+            Pushes test case TC001 to Azure DevOps, overwriting remote changes if conflicts occur.
+
         .INPUTS
             System.String
             System.Collections.Hashtable
@@ -89,17 +114,27 @@ function Sync-TcmTestCase {
             New-TcmConfig
     #>
 
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Explicit')]
     param(
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias("Path", "Id", "TestCaseId", "WorkItemId")]
         $InputObject,
 
+        [Parameter(ParameterSetName = 'Explicit')]
         [ValidateSet('Bidirectional', 'ToRemote', 'FromRemote')]
         [string] $Direction = 'Bidirectional',
 
-        [string] $TestCasesRoot,
+        [string] $TestCasesRoot = (Get-Location -PSProvider FileSystem).Path,
 
+        [Parameter(ParameterSetName = 'GitStyle')]
+        [switch] $Push,
+
+        [Parameter(ParameterSetName = 'GitStyle')]
+        [switch] $Pull,
+
+        [switch] $Force,
+
+        [Parameter(ParameterSetName = 'Explicit')]
         [ValidateSet('Manual', 'LocalWins', 'RemoteWins', 'LatestWins')]
         [string] $ConflictResolution = 'Manual'
     )
@@ -108,14 +143,29 @@ function Sync-TcmTestCase {
         # Get configuration
         $config = Get-TcmTestCaseConfig -TestCasesRoot $TestCasesRoot
 
-        # Override conflict resolution from config if not specified
-        if ($PSBoundParameters.ContainsKey('ConflictResolution') -eq $false) {
-            $ConflictResolution = $config.sync.conflictResolution
-        }
+        if ($PSCmdlet.ParameterSetName -eq 'GitStyle') {
+            if ($Push -and $Pull) {
+                throw "Cannot specify both -Push and -Pull"
+            }
+            if ($Push) {
+                $Direction = 'ToRemote'
+                $ConflictResolution = if ($Force) { 'LocalWins' } else { 'Manual' }
+            } elseif ($Pull) {
+                $Direction = 'FromRemote'
+                $ConflictResolution = if ($Force) { 'RemoteWins' } else { 'Manual' }
+            } else {
+                throw "Must specify either -Push or -Pull in Git-style mode"
+            }
+        } else {
+            # Override conflict resolution from config if not specified
+            if ($PSBoundParameters.ContainsKey('ConflictResolution') -eq $false) {
+                $ConflictResolution = $config.sync.conflictResolution
+            }
 
-        # Override direction from config if not specified
-        if ($PSBoundParameters.ContainsKey('Direction') -eq $false) {
-            $Direction = $config.sync.direction
+            # Override direction from config if not specified
+            if ($PSBoundParameters.ContainsKey('Direction') -eq $false) {
+                $Direction = $config.sync.direction
+            }
         }
 
         $stats = @{
@@ -126,12 +176,21 @@ function Sync-TcmTestCase {
             Skipped   = 0
         }
 
+        $inputItems = @()
+
         Write-Verbose "Starting sync with direction: $Direction, conflict resolution: $ConflictResolution"
     }
 
     process {
+        $inputItems += $InputObject
+    }
 
-        foreach ($resolved in ($InputObject | Resolve-TcmTestCaseFilePathInput -TestCasesRoot $config.TestCasesRoot)) {
+    end {
+        $inputItems `
+        | Get-TcmTestCase -TestCasesRoot $config.TestCasesRoot `
+        | ForEach-Object {
+
+            $resolved = $_
 
             $testCaseId = $resolved.Id
             $stats.Processed++
@@ -139,64 +198,99 @@ function Sync-TcmTestCase {
             try {
                 Write-Verbose "Syncing test case '$testCaseId'..."
 
-                # Determine sync status
-                $syncStatus = Get-TcmTestCaseSyncStatus -Id $testCaseId -Config $config
+                # Get sync status (already determined by Get-TcmTestCase)
+                $syncStatus = $resolved.SyncStatus
                 Write-Verbose "Test case '$testCaseId' status: $syncStatus"
 
                 switch ($syncStatus) {
                     'synced' {
-                        Write-Host "✓ Test case '$testCaseId' is already synced" -ForegroundColor Green
+                        Write-Host "[OK] Test case '$testCaseId' is already synced" -ForegroundColor Green
+
+                        # Ensure cache entry exists (initialize if first sync)
+                        if ($resolved.LocalData) {
+                            $currentHash = Get-TcmStringHash -InputObject $resolved.LocalData
+                            Update-TcmHashCacheEntry -TestCasesRoot $config.TestCasesRoot -TestCaseId $testCaseId -LocalHash $currentHash -RemoteHash $currentHash
+                        }
+
                         $stats.Synced++
                     }
 
                     'new-local' {
                         if ($Direction -in @('Bidirectional', 'ToRemote')) {
-                            if ($PSCmdlet.ShouldProcess("Test case '$testCaseId'", "Push to Azure DevOps")) {
-                                Write-Host "→ Pushing new test case '$testCaseId' to Azure DevOps..." -ForegroundColor Cyan
-                                Sync-TcmTestCaseToRemote -InputObject $testCaseId -TestCasesRoot $config.TestCasesRoot
-                                $stats.Synced++
-                            }
+                            Sync-TcmTestCaseToRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Message "Pushing new test case '$testCaseId' to Azure DevOps..." `
+                                -ShouldProcessOperation "Push to Azure DevOps"
+
+                            $stats.Synced++
                         } else {
-                            Write-Host "○ Skipping test case '$testCaseId' (new local, direction: $Direction)" -ForegroundColor Yellow
+                            Write-Host "[ ] Skipping test case '$testCaseId' (new local, direction: $Direction)" -ForegroundColor Yellow
                             $stats.Skipped++
                         }
                     }
 
                     'local-changes' {
                         if ($Direction -in @('Bidirectional', 'ToRemote')) {
-                            if ($PSCmdlet.ShouldProcess("Test case '$testCaseId'", "Push changes to Azure DevOps")) {
-                                Write-Host "→ Pushing changes for test case '$testCaseId' to Azure DevOps..." -ForegroundColor Cyan
-                                Sync-TcmTestCaseToRemote -InputObject $testCaseId -TestCasesRoot $config.TestCasesRoot
-                                $stats.Synced++
-                            }
+                            Sync-TcmTestCaseToRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Message "Pushing changes for test case '$testCaseId' to Azure DevOps..." `
+                                -ShouldProcessOperation "Push changes to Azure DevOps"
+
+                            $stats.Synced++
+                        } elseif ($Direction -eq 'FromRemote' -and $ConflictResolution -eq 'RemoteWins') {
+                            # Force pull: overwrite local changes with remote
+                            Sync-TcmTestCaseFromRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Message "Force pulling test case '$testCaseId' from Azure DevOps (overwriting local changes)..." `
+                                -MessageColor 'Yellow' `
+                                -ShouldProcessOperation "Force pull from Azure DevOps (overwrite local changes)"
+
+                            $stats.Synced++
                         } else {
-                            Write-Host "○ Skipping test case '$testCaseId' (local changes, direction: $Direction)" -ForegroundColor Yellow
+                            Write-Host "[ ] Skipping test case '$testCaseId' (local changes, direction: $Direction)" -ForegroundColor Yellow
                             $stats.Skipped++
                         }
                     }
 
                     'remote-changes' {
                         if ($Direction -in @('Bidirectional', 'FromRemote')) {
-                            if ($PSCmdlet.ShouldProcess("Test case '$testCaseId'", "Pull changes from Azure DevOps")) {
-                                Write-Host "← Pulling changes for test case '$testCaseId' from Azure DevOps..." -ForegroundColor Cyan
-                                Sync-TcmTestCaseFromRemote -Id $testCaseId -TestCasesRoot $config.TestCasesRoot
-                                $stats.Synced++
-                            }
+                            Sync-TcmTestCaseFromRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Message "Pulling changes for test case '$testCaseId' from Azure DevOps..." `
+                                -ShouldProcessOperation "Pull changes from Azure DevOps"
+
+                            $stats.Synced++
+                        } elseif ($Direction -eq 'ToRemote' -and $ConflictResolution -eq 'LocalWins') {
+                            # Force push: overwrite remote changes with local
+                            Sync-TcmTestCaseToRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Message "Force pushing test case '$testCaseId' to Azure DevOps (overwriting remote changes)..." `
+                                -MessageColor 'Yellow' `
+                                -ShouldProcessOperation "Force push to Azure DevOps (overwrite remote changes)"
+
+                            $stats.Synced++
                         } else {
-                            Write-Host "○ Skipping test case '$testCaseId' (remote changes, direction: $Direction)" -ForegroundColor Yellow
+                            Write-Host "[ ] Skipping test case '$testCaseId' (remote changes, direction: $Direction)" -ForegroundColor Yellow
                             $stats.Skipped++
                         }
                     }
 
                     'new-remote' {
                         if ($Direction -in @('Bidirectional', 'FromRemote')) {
-                            if ($PSCmdlet.ShouldProcess("Test case '$testCaseId'", "Pull from Azure DevOps")) {
-                                Write-Host "← Pulling test case '$testCaseId' from Azure DevOps..." -ForegroundColor Cyan
-                                Sync-TcmTestCaseFromRemote -Id $testCaseId -TestCasesRoot $config.TestCasesRoot
-                                $stats.Synced++
-                            }
+                            Sync-TcmTestCaseFromRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Message "Pulling test case '$testCaseId' from Azure DevOps..." `
+                                -ShouldProcessOperation "Pull from Azure DevOps"
+
+                            $stats.Synced++
                         } else {
-                            Write-Host "○ Skipping test case '$testCaseId' (new remote, direction: $Direction)" -ForegroundColor Yellow
+                            Write-Host "[ ] Skipping test case '$testCaseId' (new remote, direction: $Direction)" -ForegroundColor Yellow
                             $stats.Skipped++
                         }
                     }
@@ -205,20 +299,19 @@ function Sync-TcmTestCase {
                         $stats.Conflicts++
 
                         if ($ConflictResolution -eq 'Manual') {
-                            Write-Warning "⚠ Conflict detected for test case '$testCaseId'. Local and remote versions have diverged. Run 'Resolve-TcmTestCaseConflict -Id $testCaseId' to resolve manually, or specify a different ConflictResolution strategy."
+                            Write-Warning "[!] Conflict detected for test case '$testCaseId'. Local and remote versions have diverged. Run 'Resolve-TcmTestCaseConflict -Id $testCaseId' to resolve manually, or specify a different ConflictResolution strategy."
                         } else {
-                            if ($PSCmdlet.ShouldProcess("Test case '$testCaseId'", "Resolve conflict using $ConflictResolution")) {
-                                Write-Host "⚠ Resolving conflict for test case '$testCaseId' using strategy: $ConflictResolution" -ForegroundColor Yellow
+                            Write-Host "[!] Resolving conflict for test case '$testCaseId' using strategy: $ConflictResolution" -ForegroundColor Yellow
 
-                                $resolveParams = @{
-                                    Id            = $testCaseId
-                                    Strategy      = $ConflictResolution
-                                    TestCasesRoot = $config.TestCasesRoot
-                                }
-
-                                Resolve-TcmTestCaseConflict @resolveParams
-                                $stats.Synced++
+                            $resolveParams = @{
+                                InputObject   = $testCaseId
+                                Strategy      = $ConflictResolution
+                                TestCasesRoot = $config.TestCasesRoot
                             }
+
+                            Resolve-TcmTestCaseConflict @resolveParams
+
+                            $stats.Synced++
                         }
                     }
 
@@ -232,9 +325,7 @@ function Sync-TcmTestCase {
                 $stats.Errors++
             }
         }
-    }
 
-    end {
         # Display summary
         Write-Host "`nSync Summary:" -ForegroundColor Cyan
         Write-Host "  Processed:  $($stats.Processed)" -ForegroundColor White

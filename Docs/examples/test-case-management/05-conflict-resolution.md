@@ -76,11 +76,11 @@ For complex conflicts, you need to manually decide which changes to keep:
 
 ```powershell
 # 1. Get both versions
-$local = Get-TcmTestCase -Id "TC001" -IncludeMetadata
+$local = Get-TcmTestCase -Id "TC001"
 $remote = Get-WorkItem -WorkItem 12345 -CollectionUri "https://dev.azure.com/org" -Project "Project"
 
 # 2. Compare differences manually
-# Look at $local.testCase and $remote.fields
+# Look at $local.LocalData and $remote.fields
 
 # 3. Edit the local YAML file to incorporate desired changes
 

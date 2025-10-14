@@ -1,4 +1,4 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
@@ -12,29 +12,15 @@ Retrieves test case data from YAML files.
 
 ## SYNTAX
 
-### All (Default)
 ```
-Get-TcmTestCase [-TestCasesRoot <String>] [-IncludeMetadata] [-ProgressAction <ActionPreference>]
+Get-TcmTestCase [[-InputObject] <Object>] [-TestCasesRoot <String>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
-```
-
-### ById
-```
-Get-TcmTestCase [[-Id] <String>] [-TestCasesRoot <String>] [-IncludeMetadata]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### ByPath
-```
-Get-TcmTestCase [-Path <String>] [-TestCasesRoot <String>] [-IncludeMetadata]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 Retrieves test case information from local YAML files.
 Can return a single test case by ID or path,
 or return all test cases in the repository.
-Optionally includes synchronization metadata.
 
 The function searches for YAML files in the test cases root directory and parses them
 into structured PowerShell objects for further processing or display.
@@ -62,60 +48,24 @@ Get-TcmTestCase | Where-Object { $_.testCase.state -eq "Design" }
 
 Retrieves all test cases and filters for those in "Design" state.
 
-### EXAMPLE 4
-```
-Get-TcmTestCase -IncludeMetadata | Select-Object @{Name="ID";Expression={$_.testCase.id}}, @{Name="Title";Expression={$_.testCase.title}}, @{Name="File";Expression={$_.metadata.filePath}}
-```
-
-Gets all test cases with metadata and displays ID, title, and file path.
-
 ## PARAMETERS
 
-### -Id
-The local identifier of a specific test case to retrieve (e.g., "TC001").
-When specified, returns only the matching test case.
+### -InputObject
+Test case input from pipeline. Accepts:
+- Test case ID (string) - e.g., "TC001"
+- File path (string) - relative or absolute path to YAML file
+- Test case object (hashtable) - from previous operations
+Accepts pipeline input by value or property name.
 
 ```yaml
-Type: String
-Parameter Sets: ById
-Aliases:
+Type: Object
+Parameter Sets: (All)
+Aliases: Id, Path
 
 Required: False
 Position: 1
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IncludeMetadata
-Includes synchronization metadata in the output, such as file paths, modification dates,
-and sync status information.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Path
-The relative or absolute path to a specific test case YAML file.
-When specified, loads and returns data from that specific file.
-
-```yaml
-Type: String
-Parameter Sets: ByPath
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
@@ -155,18 +105,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None. This function does not accept pipeline input.
+### System.String
+### System.Collections.Hashtable
+### Accepts test case IDs, file paths, or test case objects from the pipeline.
 ## OUTPUTS
 
-### System.Collections.Hashtable[]
-### Returns an array of hashtables, each containing:
-### - testCase: The test case metadata and content
-### - metadata: File information and sync status (if -IncludeMetadata specified)
+### PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended
+### Returns objects that extend TcmTestCaseInput with test case data in the LocalData property.
+### LocalData contains the parsed test case properties (id, title, state, etc.).
 ## NOTES
 - Searches recursively through the test cases root directory for .yaml files.
 - Test case IDs are extracted from filenames (e.g., "TC001-test-name.yaml" has ID "TC001").
 - Invalid YAML files are skipped with warnings.
-- Use -IncludeMetadata to get file paths and sync information.
 
 ## RELATED LINKS
 

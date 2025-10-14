@@ -2,15 +2,9 @@ BeforeAll {
     . (Join-Path -Path $PSScriptRoot -ChildPath '..\BeforeAll.ps1')
 }
 
-Describe 'Get-TcmTestCaseSyncStatus' {
+Describe 'Resolve-TcmTestCaseSyncStatus' {
 
     BeforeAll {
-        # Suppress Write-Host output in tests
-        Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }
-        Mock -ModuleName $ModuleName -CommandName Write-Verbose -MockWith { }
-        Mock -ModuleName $ModuleName -CommandName Write-Warning -MockWith { }
-        Mock -ModuleName $ModuleName -CommandName Write-Error -MockWith { }
-
         # Mock Get-WorkItem
         Mock -ModuleName $ModuleName -CommandName Get-WorkItem -MockWith {
             @{
@@ -34,83 +28,150 @@ Describe 'Get-TcmTestCaseSyncStatus' {
 
         It 'Should return new-local for non-numeric ID' {
             # Act
-            $result = Get-TcmTestCaseSyncStatus -Id 'TC001' -Config @{ }
+            $inputObject = [PSCustomObject]@{
+                Id = 'TC001'
+                LocalData = $null
+                RemoteData = $null
+                LocalDataHash = $null
+                RemoteDataHash = $null
+                SyncStatus = $null
+            }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ }
 
             # Assert
-            $result | Should -Be 'new-local'
+            $result.SyncStatus | Should -Be 'new-local'
         }
 
         It 'Should return new-remote when local file not found' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { @() }
+            $inputObject = [PSCustomObject]@{
+                Id = '123'
+                LocalData = $null
+                RemoteData = @{ id = '123'; title = 'Remote Test Case' }
+                LocalDataHash = $null
+                RemoteDataHash = 'remote-hash'
+                SyncStatus = $null
+            }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Get-TcmTestCaseSyncStatus -Id '123' -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
 
             # Assert
-            $result | Should -Be 'new-remote'
+            $result.SyncStatus | Should -Be 'new-remote'
         }
 
         It 'Should return synced when hashes match' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmStringHash -MockWith { 'same-hash' }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
-                @{ FullName = 'C:\temp\TC001.yaml' }
+            Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
+                @{ '123' = @{ local = 'same-hash'; remote = 'same-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
+            $inputObject = [PSCustomObject]@{
+                Id = '123'
+                LocalData = @{
+                    id = '123'
+                    title = 'Local Test Case'
+                }
+                RemoteData = @{
+                    id = '123'
+                    title = 'Remote Test Case'
+                }
+                LocalDataHash = 'same-hash'
+                RemoteDataHash = 'same-hash'
+                SyncStatus = $null
+            }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Get-TcmTestCaseSyncStatus -Id '123' -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
 
             # Assert
-            $result | Should -Be 'synced'
+            $result.SyncStatus | Should -Be 'synced'
         }
 
         It 'Should return local-changes when local hash differs' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmStringHash -MockWith {
-                param($InputObject)
-                if ($InputObject.title -eq 'Local Test Case') { 'local-hash' } else { 'remote-hash' }
+            # Mock cache to have existing entry with different local hash
+            Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
+                @{ '123' = @{ local = 'old-local-hash'; remote = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
-                @{ FullName = 'C:\temp\TC001.yaml' }
+            $inputObject = [PSCustomObject]@{
+                Id = '123'
+                LocalData = @{
+                    id = '123'
+                    title = 'Local Test Case'
+                }
+                RemoteData = @{
+                    id = '123'
+                    title = 'Remote Test Case'
+                }
+                LocalDataHash = 'local-hash'
+                RemoteDataHash = 'remote-hash'
+                SyncStatus = $null
             }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Get-TcmTestCaseSyncStatus -Id '123' -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
 
             # Assert
-            $result | Should -Be 'local-changes'
+            $result.SyncStatus | Should -Be 'local-changes'
         }
 
         It 'Should return local-changes when local hash differs from remote' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmStringHash -MockWith {
-                param($InputObject)
-                if ($InputObject.title -eq 'Local Test Case') { 'local-hash' } else { 'remote-hash' }
+            # Mock cache to have existing entry with matching remote hash but different local hash
+            Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
+                @{ '123' = @{ local = 'old-local-hash'; remote = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
-                @{ FullName = 'C:\temp\TC001.yaml' }
+            $inputObject = [PSCustomObject]@{
+                Id = '123'
+                LocalData = @{
+                    id = '123'
+                    title = 'Local Test Case'
+                }
+                RemoteData = @{
+                    id = '123'
+                    title = 'Remote Test Case'
+                }
+                LocalDataHash = 'local-hash'
+                RemoteDataHash = 'remote-hash'
+                SyncStatus = $null
             }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Get-TcmTestCaseSyncStatus -Id '123' -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
 
             # Assert
-            $result | Should -Be 'local-changes'
+            $result.SyncStatus | Should -Be 'local-changes'
         }
 
         It 'Should handle remote fetch failure gracefully' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-WorkItem -MockWith { throw "API error" }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
-                @{ FullName = 'C:\temp\TC001.yaml' }
+            # Mock cache to have existing entry (previously synced)
+            Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
+                @{ '123' = @{ local = 'local-hash'; remote = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
+            $inputObject = [PSCustomObject]@{
+                Id = '123'
+                LocalData = @{
+                    id = '123'
+                    title = 'Local Test Case'
+                }
+                RemoteData = $null
+                LocalDataHash = 'local-hash'
+                RemoteDataHash = $null
+                SyncStatus = $null
+            }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Get-TcmTestCaseSyncStatus -Id '123' -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
 
             # Assert
-            $result | Should -Be 'local-changes'
+            $result.SyncStatus | Should -Be 'local-changes'
         }
     }
 }

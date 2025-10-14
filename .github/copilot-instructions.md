@@ -1,5 +1,7 @@
 ## AzureDevOpsApi — Essentials for AI agents
 
+Current work on TestCaseManagement in file `Docs/TestCaseManagement-Architecture.md`.
+
 - Project:
 
     - PowerShell module.

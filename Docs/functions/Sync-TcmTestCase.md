@@ -1,4 +1,4 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
@@ -12,10 +12,16 @@ Synchronizes test cases between local YAML files and Azure DevOps.
 
 ## SYNTAX
 
+### Explicit (Default)
 ```
-Sync-TcmTestCase [[-InputObject] <Object>] [[-Direction] <String>] [[-TestCasesRoot] <String>]
- [[-ConflictResolution] <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Sync-TcmTestCase [-InputObject <Object>] [-Direction <String>] [-TestCasesRoot <String>] [-Force]
+ [-ConflictResolution <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### GitStyle
+```
+Sync-TcmTestCase [-InputObject <Object>] [-TestCasesRoot <String>] [-Push] [-Pull] [-Force]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -67,11 +73,11 @@ How to handle conflicts when both local and remote versions have changes:
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Explicit
 Aliases:
 
 Required: False
-Position: 4
+Position: Named
 Default value: Manual
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -85,12 +91,27 @@ Direction of synchronization:
 
 ```yaml
 Type: String
+Parameter Sets: Explicit
+Aliases:
+
+Required: False
+Position: Named
+Default value: Bidirectional
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+When used with -Push or -Pull, forces the sync by choosing the respective version in case of conflicts.
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 2
-Default value: Bidirectional
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -109,7 +130,7 @@ Parameter Sets: (All)
 Aliases: Path, Id, TestCaseId, WorkItemId
 
 Required: False
-Position: 1
+Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
@@ -130,6 +151,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Pull
+Git-style switch to pull changes from Azure DevOps. Equivalent to -Direction FromRemote -ConflictResolution Manual. Use with -Force to set -ConflictResolution RemoteWins.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: GitStyle
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Push
+Git-style switch to push local changes to Azure DevOps. Equivalent to -Direction ToRemote -ConflictResolution Manual. Use with -Force to set -ConflictResolution LocalWins.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: GitStyle
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -TestCasesRoot
 Root directory containing test case YAML files.
 If not specified, uses the current directory or searches parent directories for .tcm-config.yaml.
@@ -140,7 +191,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 3
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

@@ -46,24 +46,6 @@ history:
             $result.testCase.title | Should -Be "Test Case Title"
         }
 
-        It 'Should include metadata when requested' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true }
-            Mock -ModuleName $ModuleName -CommandName Get-Content -MockWith { "testCase: { id: 123 }\nhistory: { lastModifiedAt: '2024-01-15T10:30:00Z' }" }
-            Mock -ModuleName $ModuleName -CommandName ConvertFrom-Yaml -MockWith {
-                @{ testCase = @{ id = 123 }; history = @{ lastModifiedAt = "2024-01-15T10:30:00Z" } }
-            }
-            Mock -ModuleName $ModuleName -CommandName Get-TcmRelativeTestCasePath -MockWith { "TC001.yaml" }
-
-            # Act
-            $result = Get-TcmTestCaseFromFile -FilePath 'C:\temp\TC001.yaml' -IncludeMetadata
-
-            # Assert
-            $result | Should -Not -BeNullOrEmpty
-            $result.history | Should -Not -BeNullOrEmpty
-            $result.history.lastModifiedAt | Should -Be "2024-01-15T10:30:00Z"
-        }
-
         It 'Should handle invalid YAML gracefully' {
             # Arrange
             Mock -ModuleName $ModuleName -CommandName Get-Content -MockWith { "invalid: yaml: content: [" }

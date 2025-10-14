@@ -81,7 +81,7 @@ function New-TcmConfig {
         [string]$Token,
 
         [Parameter()]
-        [string]$OutputPath = $PWD.Path,
+        [string]$OutputPath = (Get-Location -PSProvider FileSystem).Path,
 
         [Parameter()]
         [switch]$Force

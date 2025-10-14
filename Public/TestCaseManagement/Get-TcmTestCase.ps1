@@ -5,7 +5,7 @@ function Get-TcmTestCase {
 
         .DESCRIPTION
             Retrieves test case information from local YAML files. Can return a single test case by ID or path,
-            or return all test cases in the repository. Optionally includes synchronization metadata.
+            or return all test cases in the repository.
 
             The function searches for YAML files in the test cases root directory and parses them
             into structured PowerShell objects for further processing or display.
@@ -22,10 +22,6 @@ function Get-TcmTestCase {
             The root directory containing test case YAML files.
             If not specified, uses the current directory or searches parent directories for .tcm-config.yaml.
 
-        .PARAMETER IncludeMetadata
-            Includes synchronization metadata in the output, such as file paths, modification dates,
-            and sync status information.
-
         .EXAMPLE
             PS C:\> Get-TcmTestCase -Id "TC001"
 
@@ -37,29 +33,36 @@ function Get-TcmTestCase {
             Loads the test case from the specified file path.
 
         .EXAMPLE
-            PS C:\> Get-TcmTestCase | Where-Object { $_.testCase.state -eq "Design" }
+            PS C:\> Get-TcmTestCase | Where-Object { $_.LocalData.state -eq "Design" }
 
             Retrieves all test cases and filters for those in "Design" state.
 
-        .EXAMPLE
-            PS C:\> Get-TcmTestCase -IncludeMetadata | Select-Object @{Name="ID";Expression={$_.testCase.id}}, @{Name="Title";Expression={$_.testCase.title}}, @{Name="File";Expression={$_.metadata.filePath}}
+        .PARAMETER InputObject
+            Test case input from pipeline. Accepts:
+            - Test case ID (string) - e.g., "TC001"
+            - File path (string) - relative or absolute path to YAML file
+            - Test case object (hashtable) - from previous operations
+            Accepts pipeline input by value or property name.
 
-            Gets all test cases with metadata and displays ID, title, and file path.
+        .EXAMPLE
+            PS C:\> "TC001", "TC002" | Get-TcmTestCase
+
+            Retrieves multiple test cases by ID from pipeline.
 
         .INPUTS
-            None. This function does not accept pipeline input.
+            System.String
+            System.Collections.Hashtable
+            Accepts test case IDs, file paths, or test case objects from the pipeline.
 
         .OUTPUTS
-            System.Collections.Hashtable[]
-            Returns an array of hashtables, each containing:
-            - testCase: The test case metadata and content
-            - metadata: File information and sync status (if -IncludeMetadata specified)
+            PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended
+            Returns objects that extend TcmTestCaseInput with test case data in the LocalData property.
+            LocalData contains the parsed test case properties (id, title, state, etc.).
 
         .NOTES
             - Searches recursively through the test cases root directory for .yaml files.
             - Test case IDs are extracted from filenames (e.g., "TC001-test-name.yaml" has ID "TC001").
             - Invalid YAML files are skipped with warnings.
-            - Use -IncludeMetadata to get file paths and sync information.
 
         .LINK
             New-TcmTestCase
@@ -71,91 +74,134 @@ function Get-TcmTestCase {
             New-TcmConfig
     #>
 
-    [CmdletBinding(DefaultParameterSetName = 'All')]
+    [CmdletBinding()]
+    [OutputType('PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')]
     param(
-        [Parameter(ParameterSetName = 'ById', Position = 0)]
-        [string] $Id,
+        [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Id', 'Path')]
+        $InputObject,
 
-        [Parameter(ParameterSetName = 'ByPath')]
-        [string] $Path,
-
-        [string] $TestCasesRoot,
-
-        [switch] $IncludeMetadata
+        [string] $TestCasesRoot = (Get-Location -PSProvider FileSystem).Path
     )
 
-    try {
+    begin {
         # Get configuration
         $config = Get-TcmTestCaseConfig -TestCasesRoot $TestCasesRoot
+        $inputItems = @()
+        $seenEmptyInput = $false
+    }
 
-        if ($PSCmdlet.ParameterSetName -eq 'ByPath') {
-            # Load specific test case by path
-            $fullPath = Join-Path $config.TestCasesRoot $Path
-            if (-not (Test-Path $fullPath)) {
-                throw "Test case file not found: $fullPath"
-            }
-
-            $testCase = Get-TcmTestCaseFromFile -FilePath $fullPath -IncludeMetadata:$IncludeMetadata
-            return $testCase
-        } elseif ($PSCmdlet.ParameterSetName -eq 'ById') {
-            # Load specific test case by ID - scan files directly
-            $foundFile = $null
-            $yamlFiles = Get-ChildItem -Path $config.TestCasesRoot -Include "*.yaml" -Recurse -File
-
-            foreach ($file in $yamlFiles) {
-                try {
-                    $fileData = Get-TcmTestCaseFromFile -FilePath $file.FullName -IncludeMetadata -ErrorAction SilentlyContinue
-                    if ($fileData.testCase.id -eq $Id) {
-                        $foundFile = $file.FullName
-                        break
-                    }
-                } catch {
-                    # Skip files that can't be parsed
-                    continue
-                }
-            }
-
-            if (-not $foundFile) {
-                throw "Test case with ID '$Id' not found in any YAML file"
-            }
-
-            $testCase = Get-TcmTestCaseFromFile -FilePath $foundFile -IncludeMetadata:$IncludeMetadata
-            return $testCase
+    process {
+        # Collect all input items (or null for 'all' mode)
+        if ($null -eq $InputObject) {
+            $seenEmptyInput = $true
         } else {
-            # Load all test cases
-            $testCases = @()
-            $yamlFiles = Get-ChildItem -Path $config.TestCasesRoot -Include "*.yaml" -Recurse -File
-
-            # Get exclude patterns from config
-            $excludePatterns = $config.sync.excludePatterns
-            if (-not $excludePatterns) {
-                $excludePatterns = @()
-            }
-
-            # Always exclude the config file itself
-            $excludePatterns += ".tcm-config.yaml"
-
-            foreach ($file in $yamlFiles) {
-                # Get relative path for pattern matching (normalize to forward slashes)
-                $relativePath = $file.FullName.Substring($config.TestCasesRoot.Length + 1).Replace('\', '/')
-
-                # Check if file should be excluded
-                # Include both root-level (*.yaml) and nested files (**/*.yaml)
-                $shouldInclude = Test-String -InputObject $relativePath -Include @('*.yaml', '**/*.yaml') -Exclude $excludePatterns
-
-                if ($shouldInclude) {
-                    try {
-                        $testCase = Get-TcmTestCaseFromFile -FilePath $file.FullName -IncludeMetadata:$IncludeMetadata
-                        $testCases += $testCase
-                    } catch {
-                        Write-Warning "Failed to load test case from $($file.FullName): $($_.Exception.Message)"
-                    }
-                }
-            }
-
-            return $testCases
+            $inputItems += $InputObject
         }
-    } catch {
-        throw "Failed to get test case(s): $($_.Exception.Message)"
+    }
+
+    end {
+        $results = @()
+
+        # If no specific input was provided, add null to indicate 'all' mode
+        if ($seenEmptyInput) {
+            $inputItems = $null
+        }
+
+        # Use ConvertTo-TcmTestCaseInput to normalize all inputs
+        $resolvedInputs = $inputItems `
+        | ConvertTo-TcmTestCaseInput -TestCasesRoot $config.TestCasesRoot
+
+        foreach ($resolved in $resolvedInputs) {
+            try {
+                $localData = $null
+                $remoteData = $null
+                $remoteDataHash = $null
+
+                # If LocalData is already populated (from pipeline objects), use it
+                if ($null -ne $resolved.LocalData) {
+                    $localData = $resolved.LocalData
+                }
+
+                # If we have a FilePath, check exclude patterns and load local data
+                if ($null -ne $resolved.FilePath) {
+                    Write-Debug "Loading local data from file $($resolved.FilePath)..."
+                    $localData = Get-TcmTestCaseFromFile -FilePath $resolved.FilePath
+                    $resolved.Id = $localData.testCase.id
+                }
+
+                # If we have a numeric ID, load from remote
+                if (($null -ne $resolved.Id) -and ($resolved.Id -match '^\d+$')) {
+                    Write-Debug "Loading remote data for Work Item ID $($resolved.Id)..."
+
+                    # Get Azure DevOps configuration
+                    $collectionUri = $config.azureDevOps.collectionUri
+                    $project = $config.azureDevOps.project
+
+                    if (-not $collectionUri -or -not $project) {
+                        throw "Azure DevOps collectionUri and project must be configured in config.yaml"
+                    }
+
+                    $workItemId = [int]$resolved.Id
+                    Write-Verbose "Loading work item $workItemId from Azure DevOps..."
+
+                    $workItem = Get-WorkItem -WorkItem $workItemId -CollectionUri $collectionUri -Project $project
+
+                    if ($null -eq $workItem) {
+                        throw "Work item $workItemId not found in Azure DevOps"
+                    }
+                    if ($workItem.fields.'System.WorkItemType' -ne 'Test Case') {
+                        throw "Work item $workItemId is not a Test Case (type: $($workItem.fields.'System.WorkItemType'))"
+                    }
+
+                    # Convert work item to test case format
+                    $remoteData = ConvertFrom-TcmWorkItemToTestCase -WorkItem $workItem
+
+                    # Calculate hash for remote data
+                    $remoteDataHash = Get-TcmStringHash -InputObject $remoteData
+                }
+
+                # If we have a non-numeric ID without a local file, throw error
+                elseif ($null -ne $resolved.Id) {
+                    throw "Invalid test case ID '$($resolved.Id)': Not a numeric Work Item ID and no local file found"
+                }
+
+                # Create unified output object that extends TcmTestCaseInput
+                if ($localData -or $remoteData) {
+                    $resultObject = [PSCustomObject] @{
+                        # Inherit from TcmTestCaseInput
+                        FilePath   = $resolved.FilePath
+                        Id         = $resolved.Id
+                        SyncStatus = $null
+
+                        # Additional metadata properties
+                        FileName       = if ($localData) { $localData.FileName } else { $null }
+                        LocalData      = if ($localData.testCase) { $localData.testCase } else { $null }
+                        LocalDataHash  = if ($localData) { $localData.LocalDataHash } else { $null }
+                        RemoteDataHash = if ($remoteData) { $remoteDataHash } else { $null }
+                        RemoteData     = if ($remoteData) { $remoteData } else { $null }
+                        RemoteWorkItem = if ($workItem) { $workItem } else { $null }
+                    }
+
+                    # Set proper PSTypeNames for inheritance
+                    $resultObject.PSTypeNames.Insert(0, $global:PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended)
+                    $resultObject.PSTypeNames.Insert(0, $global:PSTypeNames.AzureDevOpsApi.TcmTestCaseInput)
+
+                    # Ensure Id is set from LocalData if not already available
+                    if (-not $resultObject.Id -and $localData.testCase.id) {
+                        $resultObject.Id = $localData.testCase.id
+                    }
+
+                    # Determine sync status
+                    $resultObject = Resolve-TcmTestCaseSyncStatus -InputObject $resultObject -Config $config
+
+                    $results += $resultObject
+                }
+            } catch {
+                Write-Error "Failed to load test case: $($_.Exception.Message)"
+            }
+        }
+
+        return $results
     }
 }

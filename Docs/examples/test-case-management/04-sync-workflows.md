@@ -8,7 +8,7 @@ The TestCaseManagement system supports three main sync workflows:
 
 - **Push**: Send local test case changes to Azure DevOps
 - **Pull**: Retrieve test case changes from Azure DevOps
-- **Bidirectional**: Two-way synchronization (not yet implemented as a single command)
+- **Bidirectional**: Two-way synchronization with intelligent conflict resolution
 
 ## Push Operations
 
@@ -106,7 +106,23 @@ Possible sync statuses:
 
 ## Bidirectional Workflow
 
-While there's no single "bidirectional sync" command, you can achieve bidirectional synchronization by running both push and pull operations:
+The `Sync-TcmTestCase` command provides intelligent bidirectional synchronization with git-like syntax:
+
+```powershell
+# Bidirectional sync (default behavior)
+Sync-TcmTestCase
+
+# Or using explicit parameters
+Sync-TcmTestCase -Direction Bidirectional
+
+# Git-like syntax for push
+Sync-TcmTestCase -Push
+
+# Git-like syntax for pull
+Sync-TcmTestCase -Pull -Force
+```
+
+For manual control, you can still use the individual push/pull commands:
 
 ```powershell
 # Manual bidirectional sync

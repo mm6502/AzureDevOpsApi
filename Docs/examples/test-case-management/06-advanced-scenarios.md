@@ -41,8 +41,8 @@ testCase:
 
 ```powershell
 # Update custom fields in existing test case
-$testCase = Get-TcmTestCase -Id "TC001" -IncludeMetadata
-$testCase.testCase.customFields["Custom.TestStatus"] = "In Review"
+$testCase = Get-TcmTestCase -Id "TC001"
+$testCase.LocalData.customFields["Custom.TestStatus"] = "In Review"
 $testCase | Save-TcmTestCaseYaml -FilePath "TestCases/TC001.yaml"
 
 # Push the changes
@@ -207,9 +207,9 @@ testCase:
 
 ```powershell
 # Update test case with automation results
-$testCase = Get-TcmTestCase -Id "TC001" -IncludeMetadata
-$testCase.testCase.customFields["Custom.LastRunDate"] = Get-Date -Format "yyyy-MM-dd"
-$testCase.testCase.customFields["Custom.LastRunResult"] = "Passed"
+$testCase = Get-TcmTestCase -Id "TC001"
+$testCase.LocalData.customFields["Custom.LastRunDate"] = Get-Date -Format "yyyy-MM-dd"
+$testCase.LocalData.customFields["Custom.LastRunResult"] = "Passed"
 $testCase | Save-TcmTestCaseYaml -FilePath "TestCases/TC001.yaml"
 
 Sync-TcmTestCaseToRemote -InputObject "TC001"
@@ -353,20 +353,6 @@ foreach ($row in $excelData) {
         "Custom.LegacyId" = $row.Id
         "Custom.MigratedDate" = Get-Date -Format "yyyy-MM-dd"
     }
-}
-```
-
-### Archiving Old Test Cases
-
-```powershell
-# Move old test cases to archive
-$oldTestCases = Get-ChildItem "TestCases/**/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Get-TcmTestCase -IncludeMetadata | Where-Object {
-    $_.history.lastModifiedAt -lt (Get-Date).AddMonths(-6)
-}
-
-foreach ($tc in $oldTestCases) {
-    $fileName = Split-Path $tc.FilePath -Leaf
-    Move-Item $tc.FilePath "TestCases/Archive/$fileName" -Force
 }
 ```
 
