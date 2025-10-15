@@ -44,7 +44,10 @@ function Sync-TcmTestCase {
             Git-style switch to pull changes from Azure DevOps. Equivalent to -Direction FromRemote -ConflictResolution Manual. Use with -Force to set -ConflictResolution RemoteWins.
 
         .PARAMETER Force
-            When used with -Push or -Pull, forces the sync by choosing the respective version in case of conflicts.
+            When used with -Push or -Pull, forces the sync operation:
+            - With -Pull: Forces pull from remote, overwriting local even if already synced
+            - With -Push: Forces push to remote, overwriting remote even if already synced
+            - In case of conflicts: Automatically chooses the respective version (LocalWins for -Push, RemoteWins for -Pull)
 
         .PARAMETER WhatIf
             Shows what would happen if the cmdlet runs without actually performing the sync operations.
@@ -204,15 +207,38 @@ function Sync-TcmTestCase {
 
                 switch ($syncStatus) {
                     'synced' {
-                        Write-Host "[OK] Test case '$testCaseId' is already synced" -ForegroundColor Green
-
-                        # Ensure cache entry exists (initialize if first sync)
-                        if ($resolved.LocalData) {
-                            $currentHash = Get-TcmStringHash -InputObject $resolved.LocalData
-                            Update-TcmHashCacheEntry -TestCasesRoot $config.TestCasesRoot -TestCaseId $testCaseId -Hash $currentHash
+                        # If using -Pull -Force or -Push -Force, force the sync even when already synced
+                        if ($ConflictResolution -eq 'RemoteWins' -and $Direction -eq 'FromRemote') {
+                            # Force pull from remote even though synced
+                            Sync-TcmTestCaseFromRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Force `
+                                -Message "Force pulling test case '$testCaseId' from Azure DevOps..." `
+                                -ShouldProcessOperation "Force pull from Azure DevOps"
+                            $stats.Synced++
                         }
+                        elseif ($ConflictResolution -eq 'LocalWins' -and $Direction -eq 'ToRemote') {
+                            # Force push to remote even though synced
+                            Sync-TcmTestCaseToRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Force `
+                                -Message "Force pushing test case '$testCaseId' to Azure DevOps..." `
+                                -ShouldProcessOperation "Force push to Azure DevOps"
+                            $stats.Synced++
+                        }
+                        else {
+                            Write-Host "[OK] Test case '$testCaseId' is already synced" -ForegroundColor Green
 
-                        $stats.Synced++
+                            # Ensure cache entry exists (initialize if first sync)
+                            if ($resolved.LocalData) {
+                                $currentHash = Get-TcmStringHash -InputObject $resolved.LocalData
+                                Update-TcmHashCacheEntry -TestCasesRoot $config.TestCasesRoot -TestCaseId $testCaseId -Hash $currentHash
+                            }
+
+                            $stats.Synced++
+                        }
                     }
 
                     'new-local' {
