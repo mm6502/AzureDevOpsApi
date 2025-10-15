@@ -5,7 +5,7 @@ function Get-TcmHashCache {
 
         .DESCRIPTION
             Loads the hash cache file (.tcm-hashes.json) which stores the last-known
-            local and remote hashes for each test case ID. This enables detection of
+            synced hash for each test case ID. This enables detection of
             concurrent changes and proper 3-way merge status determination.
 
         .PARAMETER TestCasesRoot
@@ -14,8 +14,7 @@ function Get-TcmHashCache {
         .OUTPUTS
             Hashtable with structure: @{
                 <testCaseId> = @{
-                    local = <localHash>
-                    remote = <remoteHash>
+                    hash = <syncedHash>
                     lastSync = <timestamp>
                 }
             }
@@ -50,8 +49,7 @@ function Get-TcmHashCache {
             $cache = @{}
             foreach ($prop in $cacheObj.PSObject.Properties) {
                 $cache[$prop.Name] = @{
-                    local = $prop.Value.local
-                    remote = $prop.Value.remote
+                    hash = $prop.Value.hash
                     lastSync = $prop.Value.lastSync
                 }
             }

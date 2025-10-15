@@ -209,7 +209,7 @@ function Sync-TcmTestCase {
                         # Ensure cache entry exists (initialize if first sync)
                         if ($resolved.LocalData) {
                             $currentHash = Get-TcmStringHash -InputObject $resolved.LocalData
-                            Update-TcmHashCacheEntry -TestCasesRoot $config.TestCasesRoot -TestCaseId $testCaseId -LocalHash $currentHash -RemoteHash $currentHash
+                            Update-TcmHashCacheEntry -TestCasesRoot $config.TestCasesRoot -TestCaseId $testCaseId -Hash $currentHash
                         }
 
                         $stats.Synced++

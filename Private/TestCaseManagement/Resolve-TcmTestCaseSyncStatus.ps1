@@ -108,17 +108,17 @@ function Resolve-TcmTestCaseSyncStatus {
         }
 
         # Compare with cached hashes to detect changes
-        $cachedLocalHash = $cachedEntry.local
-        $cachedRemoteHash = $cachedEntry.remote
+        $cachedHash = $cachedEntry.hash
 
-        $localChanged = ($null -ne $cachedLocalHash -and $localHash -ne $cachedLocalHash)
-        $remoteChanged = ($null -ne $cachedRemoteHash -and $remoteHash -ne $cachedRemoteHash)
+        $localChanged = ($localHash -ne $cachedHash)
+        $remoteChanged = ($remoteHash -ne $cachedHash)
 
         Write-Verbose "Cache comparison for test case '$Id': localChanged=$localChanged, remoteChanged=$remoteChanged"
-        Write-Verbose "  Current local: $localHash, Cached local: $cachedLocalHash"
-        Write-Verbose "  Current remote: $remoteHash, Cached remote: $cachedRemoteHash"
+        Write-Verbose "  Current local: $localHash"
+        Write-Verbose "  Current remote: $remoteHash"
+        Write-Verbose "  Cached (last sync): $cachedHash"
 
-        # Determine sync status based on change pattern
+        # Determine sync status based on 3-way merge logic
         if (-not $localChanged -and -not $remoteChanged) {
             # No changes since last sync
             $InputObject.SyncStatus = "synced"
@@ -131,8 +131,12 @@ function Resolve-TcmTestCaseSyncStatus {
             # Only remote changed since last sync
             $InputObject.SyncStatus = "remote-changes"
         }
+        elseif ($localHash -eq $remoteHash) {
+            # Both changed to the same value - in sync
+            $InputObject.SyncStatus = "synced"
+        }
         else {
-            # Both changed since last sync = conflict
+            # Both changed to different values = conflict
             $InputObject.SyncStatus = "conflict"
         }
 

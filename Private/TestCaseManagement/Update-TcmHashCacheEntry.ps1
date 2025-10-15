@@ -4,8 +4,9 @@ function Update-TcmHashCacheEntry {
             Updates a single test case entry in the hash cache.
 
         .DESCRIPTION
-            Updates the hash cache entry for a specific test case ID with new
-            local and/or remote hash values. Also updates the lastSync timestamp.
+            Updates the hash cache entry for a specific test case ID with the synced hash value.
+            This should only be called after a successful sync where local and remote are equal.
+            Also updates the lastSync timestamp.
 
         .PARAMETER TestCasesRoot
             Root directory containing test case YAML files and the hash cache file.
@@ -13,17 +14,11 @@ function Update-TcmHashCacheEntry {
         .PARAMETER TestCaseId
             The test case ID to update in the cache.
 
-        .PARAMETER LocalHash
-            The current local hash value. If not specified, uses the value from cache.
-
-        .PARAMETER RemoteHash
-            The current remote hash value. If not specified, uses the value from cache.
+        .PARAMETER Hash
+            The hash value representing the synced state (must be equal for both local and remote).
 
         .EXAMPLE
-            Update-TcmHashCacheEntry -TestCasesRoot "C:\TestCases" -TestCaseId "12345" -LocalHash "abc123" -RemoteHash "abc123"
-
-        .EXAMPLE
-            Update-TcmHashCacheEntry -TestCasesRoot "C:\TestCases" -TestCaseId "TC001" -LocalHash "def456"
+            Update-TcmHashCacheEntry -TestCasesRoot "C:\TestCases" -TestCaseId "12345" -Hash "abc123"
     #>
 
     [CmdletBinding()]
@@ -34,37 +29,21 @@ function Update-TcmHashCacheEntry {
         [Parameter(Mandatory)]
         [string] $TestCaseId,
 
-        [string] $LocalHash,
-
-        [string] $RemoteHash
+        [Parameter(Mandatory)]
+        [string] $Hash
     )
 
     # Load current cache
     $cache = Get-TcmHashCache -TestCasesRoot $TestCasesRoot
 
-    # Get existing entry or create new one
-    if (-not $cache.ContainsKey($TestCaseId)) {
-        $cache[$TestCaseId] = @{
-            local    = $null
-            remote   = $null
-            lastSync = $null
-        }
+    # Update or create entry with new format
+    $cache[$TestCaseId] = @{
+        hash     = $Hash
+        lastSync = (Get-Date).ToUniversalTime().ToString('o')
     }
-
-    # Update hashes if provided
-    if ($PSBoundParameters.ContainsKey('LocalHash')) {
-        $cache[$TestCaseId].local = $LocalHash
-    }
-
-    if ($PSBoundParameters.ContainsKey('RemoteHash')) {
-        $cache[$TestCaseId].remote = $RemoteHash
-    }
-
-    # Update timestamp
-    $cache[$TestCaseId].lastSync = (Get-Date).ToUniversalTime().ToString('o')
 
     # Save updated cache
     Set-TcmHashCache -TestCasesRoot $TestCasesRoot -Cache $cache
 
-    Write-Verbose "Updated hash cache entry for test case '$TestCaseId'"
+    Write-Verbose "Updated hash cache entry for test case '$TestCaseId' (hash: $($Hash.Substring(0, 8))...)"
 }

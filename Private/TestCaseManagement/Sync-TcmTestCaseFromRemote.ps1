@@ -119,8 +119,7 @@ function Sync-TcmTestCaseFromRemote {
                 Update-TcmHashCacheEntry `
                     -TestCasesRoot $config.TestCasesRoot `
                     -TestCaseId $workItemId `
-                    -LocalHash $savedHash `
-                    -RemoteHash $savedHash
+                    -Hash $savedHash
             }
         } catch {
             $hasErrors = $true

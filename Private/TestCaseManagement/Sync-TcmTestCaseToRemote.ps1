@@ -172,8 +172,7 @@ function Sync-TcmTestCaseToRemote {
                     Update-TcmHashCacheEntry `
                         -TestCasesRoot $config.TestCasesRoot `
                         -TestCaseId $workItem.id `
-                        -LocalHash $localHash `
-                        -RemoteHash $localHash
+                        -Hash $localHash
                 }
             } else {
                 # Create new work item (ID is not found remotely or not numeric)
@@ -249,8 +248,7 @@ function Sync-TcmTestCaseToRemote {
                     Update-TcmHashCacheEntry `
                         -TestCasesRoot $config.TestCasesRoot `
                         -TestCaseId $workItem.id `
-                        -LocalHash $savedHash `
-                        -RemoteHash $savedHash
+                        -Hash $savedHash
                 }
             }
 
