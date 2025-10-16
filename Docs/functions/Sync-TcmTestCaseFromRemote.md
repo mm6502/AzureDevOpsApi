@@ -13,8 +13,8 @@ Pulls test case(s) from Azure DevOps to local YAML files.
 ## SYNTAX
 
 ```
-Sync-TcmTestCaseFromRemote [[-InputObject] <Object>] [[-OutputPath] <String>] [[-TestCasesRoot] <String>]
- [-Force] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Sync-TcmTestCaseFromRemote [[-Id] <String>] [[-OutputPath] <String>] [[-TestCasesRoot] <String>] [-Force]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,18 +54,19 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InputObject
-The test case to pull. Can be a test case ID (string), file path (string), or resolved object from ConvertTo-TcmTestCaseInput. If omitted, pulls all test cases that have remote changes.
+### -Id
+The Azure DevOps Work Item ID to pull (numeric). If omitted, pulls all
+test cases that need updating.
 
 ```yaml
-Type: Object
+Type: String
 Parameter Sets: (All)
-Aliases: Path, FilePath, Id, TestCaseId, WorkItemId
+Aliases: WorkItemId
 
 Required: False
 Position: 1
 Default value: None
-Accept pipeline input: True (ByPropertyName, ByValue)
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
