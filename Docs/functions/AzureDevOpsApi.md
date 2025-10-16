@@ -446,6 +446,9 @@ Submits pull requests for the specified repositories and branches.
 ### [Submit-PullRequests](Submit-PullRequests.md)
 Submits pull requests for the specified repositories and branches.
 
+### [Test-ApiCredential](Test-ApiCredential.md)
+Tests Azure DevOps API credentials to verify they are valid and have required permissions.
+
 ### [Test-DateTimeRange](Test-DateTimeRange.md)
 Decides whether given $Value is in range \<$From, $To\>.
 

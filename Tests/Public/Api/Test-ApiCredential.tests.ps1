@@ -189,6 +189,66 @@ Describe 'Test-ApiCredential' {
         }
     }
 
+    Context 'When using default network credentials' {
+
+        It 'Should handle user object with missing displayName and mailAddress' {
+            # Arrange - Mock user with only providerDisplayName (as returned by Windows auth)
+            Mock -ModuleName $ModuleName -CommandName Get-CurrentUser -MockWith {
+                return [PSCustomObject]@{
+                    providerDisplayName = 'DOMAIN\Username'
+                    id                  = 'test-user-id'
+                }
+            }
+
+            # Act
+            $result = Test-ApiCredential -CollectionUri $mockCollectionUri -Verbose 4>&1
+
+            # Assert
+            $verboseMessages = $result | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $userMessage = $verboseMessages | Where-Object { $_.Message -match 'User:' } | Select-Object -First 1
+            $userMessage.Message | Should -Match 'DOMAIN\\Username'
+        }
+
+        It 'Should handle user object with null properties gracefully' {
+            # Arrange - Mock user with null/missing properties
+            Mock -ModuleName $ModuleName -CommandName Get-CurrentUser -MockWith {
+                return [PSCustomObject]@{
+                    displayName = $null
+                    mailAddress = $null
+                    id          = 'test-user-id'
+                }
+            }
+
+            # Act
+            $result = Test-ApiCredential -CollectionUri $mockCollectionUri
+
+            # Assert
+            $result.Success | Should -BeTrue
+            $result.User | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should prefer displayName over providerDisplayName when both present' {
+            # Arrange
+            Mock -ModuleName $ModuleName -CommandName Get-CurrentUser -MockWith {
+                return [PSCustomObject]@{
+                    displayName         = 'John Doe'
+                    providerDisplayName = 'DOMAIN\jdoe'
+                    mailAddress         = 'john@example.com'
+                    id                  = 'test-user-id'
+                }
+            }
+
+            # Act
+            $result = Test-ApiCredential -CollectionUri $mockCollectionUri -Verbose 4>&1
+
+            # Assert
+            $verboseMessages = $result | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $userMessage = $verboseMessages | Where-Object { $_.Message -match 'User:' } | Select-Object -First 1
+            $userMessage.Message | Should -Match 'John Doe'
+            $userMessage.Message | Should -Not -Match 'DOMAIN\\jdoe'
+        }
+    }
+
     Context 'Output type validation' {
 
         BeforeEach {

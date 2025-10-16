@@ -52,9 +52,9 @@ function Test-ApiCredential {
 
         .EXAMPLE
             if (Test-ApiCredential -Quiet) {
-                Write-Host "✅ Credentials are valid"
+                Write-Host "$(Get-Emoji checkmark) Credentials are valid"
             } else {
-                Write-Host "❌ Credentials are invalid"
+                Write-Host "$(Get-Emoji cross) Credentials are invalid"
             }
 
             Quick validation in a script.
@@ -62,10 +62,10 @@ function Test-ApiCredential {
         .EXAMPLE
             $result = Test-ApiCredential
             if ($result.Success) {
-                Write-Host "✅ Connected as: $($result.User.displayName)"
+                Write-Host "$(Get-Emoji checkmark) Connected as: $($result.User.displayName)"
                 Write-Host "   Email: $($result.User.mailAddress)"
             } else {
-                Write-Host "❌ Failed: $($result.ErrorMessage)"
+                Write-Host "$(Get-Emoji cross) Failed: $($result.ErrorMessage)"
             }
 
             Detailed validation with user information.
@@ -127,8 +127,17 @@ function Test-ApiCredential {
             $result.User = $user
 
             if (-not $Quiet) {
-                Write-Verbose "✅ Credentials are valid"
-                Write-Verbose "   User: $($user.displayName) ($($user.mailAddress))"
+                Write-Verbose "$(Get-Emoji checkmark) Credentials are valid"
+
+                # Build user info string (properties may be null with default credentials)
+                $userInfo = @()
+                if ($user.displayName) { $userInfo += $user.displayName }
+                if ($user.mailAddress) { $userInfo += "($($user.mailAddress))" }
+                if ($user.providerDisplayName -and -not $user.displayName) { $userInfo += $user.providerDisplayName }
+
+                if ($userInfo.Count -gt 0) {
+                    Write-Verbose "   User: $($userInfo -join ' ')"
+                }
                 Write-Verbose "   Collection: $($result.CollectionUri)"
             }
 
@@ -150,15 +159,15 @@ function Test-ApiCredential {
             if (-not $Quiet) {
                 switch ($result.StatusCode) {
                     401 {
-                        Write-Warning "❌ 401 Unauthorized: Credentials are invalid or expired"
+                        Write-Warning "$(Get-Emoji cross) 401 Unauthorized: Credentials are invalid or expired"
                         Write-Warning "   Check that your PAT token is set correctly and hasn't expired"
                     }
                     403 {
-                        Write-Warning "❌ 403 Forbidden: Credentials lack required permissions"
+                        Write-Warning "$(Get-Emoji cross) 403 Forbidden: Credentials lack required permissions"
                         Write-Warning "   Ensure your PAT has at least 'Read' access to the organization"
                     }
                     default {
-                        Write-Warning "❌ Connection failed: $($result.ErrorMessage)"
+                        Write-Warning "$(Get-Emoji cross) Connection failed: $($result.ErrorMessage)"
                     }
                 }
             }
