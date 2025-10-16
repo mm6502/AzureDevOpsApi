@@ -43,7 +43,7 @@ Loads the test case from the specified file path.
 
 ### EXAMPLE 3
 ```
-Get-TcmTestCase | Where-Object { $_.testCase.state -eq "Design" }
+Get-TcmTestCase | Where-Object { $_.LocalData.testCase.state -eq "Design" }
 ```
 
 Retrieves all test cases and filters for those in "Design" state.

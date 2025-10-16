@@ -78,7 +78,7 @@ Work with custom fields, bulk operations, and performance optimization.
 **Query and filter test cases:**
 
 ```powershell
-Get-TcmTestCase | Where-Object { $_.LocalData.state -eq "Ready" }
+Get-TcmTestCase | Where-Object { $_.LocalData.testCase.state -eq "Ready" }
 Get-TcmTestCase | Where-Object { $_.SyncStatus -eq "local-changes" }
 ```
 

@@ -32,6 +32,20 @@ Automatically detects sync status and handles conflicts based on the specified r
 The function compares content hashes to determine if local and remote versions differ,
 and performs the appropriate sync operation based on the direction and conflict resolution settings.
 
+### Parameter Sets
+
+This function provides two parameter sets for different use cases:
+
+**GitStyle (Recommended for interactive use):**
+- Uses `-Push`, `-Pull`, and `-Force` switches
+- Intuitive for users familiar with Git workflows
+- Example: `Sync-TcmTestCase -Push`
+
+**Explicit (Better for automation):**
+- Uses `-Direction` parameter with values: ToRemote, FromRemote, Bidirectional
+- Allows dynamic direction calculation at runtime
+- Example: `Sync-TcmTestCase -Direction $direction`
+
 ## EXAMPLES
 
 ### EXAMPLE 1

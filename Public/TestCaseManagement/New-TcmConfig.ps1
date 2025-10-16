@@ -81,6 +81,7 @@ function New-TcmConfig {
         [string]$Token,
 
         [Parameter()]
+        [Alias('Path', 'TestCasesRoot')]
         [string]$OutputPath = (Get-Location -PSProvider FileSystem).Path,
 
         [Parameter()]

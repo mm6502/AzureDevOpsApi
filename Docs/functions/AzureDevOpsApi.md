@@ -446,12 +446,6 @@ Submits pull requests for the specified repositories and branches.
 ### [Sync-TcmTestCase](Sync-TcmTestCase.md)
 Synchronizes test cases between local YAML files and Azure DevOps.
 
-### [Sync-TcmTestCaseFromRemote](Sync-TcmTestCaseFromRemote.md)
-Pulls test case(s) from Azure DevOps to local YAML files.
-
-### [Sync-TcmTestCaseToRemote](Sync-TcmTestCaseToRemote.md)
-Pushes a local test case to Azure DevOps.
-
 ### [Test-DateTimeRange](Test-DateTimeRange.md)
 Decides whether given $Value is in range \<$From, $To\>.
 
