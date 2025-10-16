@@ -8,6 +8,7 @@ Before using TestCaseManagement features, you need to create a configuration fil
 
 - Azure DevOps organization and project
 - Personal Access Token (PAT) with work item read/write permissions
+  - **New to PATs?** See [Creating a Personal Access Token](../credentials/00-creating-pat-token.md)
 - PowerShell with AzureDevOpsApi module loaded
 
 ## Basic Configuration Setup
