@@ -10,17 +10,18 @@
 #>
 
 # Global emoji character mapping
+# Using ASCII codes for PS5 to avoid encoding issues
 $script:EmojiMap = @{
-    'checkmark'       = if ($PSVersionTable.PSVersion.Major -ge 7) { '✅' } else { '[√]' }
-    'cross'           = if ($PSVersionTable.PSVersion.Major -ge 7) { '❌' } else { '[x]' }
-    'warning'         = if ($PSVersionTable.PSVersion.Major -ge 7) { '⚠️' } else { '[!]' }
-    'info'            = if ($PSVersionTable.PSVersion.Major -ge 7) { 'ℹ️' } else { '[i]' }
-    'star'            = if ($PSVersionTable.PSVersion.Major -ge 7) { '⭐' } else { '[*]' }
-    'party'           = if ($PSVersionTable.PSVersion.Major -ge 7) { '🎉' } else { '[^]' }
-    'hourglass'       = if ($PSVersionTable.PSVersion.Major -ge 7) { '⏳' } else { '[~]' }
-    'unknown'         = if ($PSVersionTable.PSVersion.Major -ge 7) { '❓' } else { '[?]' }
-    'right'           = if ($PSVersionTable.PSVersion.Major -ge 7) { '➡️' } else { '->>' }
-    'left'            = if ($PSVersionTable.PSVersion.Major -ge 7) { '⬅️' } else { '<<-' }
+    'checkmark'       = if ($PSVersionTable.PSVersion.Major -ge 7) { '✅' } else { "[$([char]0x221A)]" }  # √ (square root)
+    'cross'           = if ($PSVersionTable.PSVersion.Major -ge 7) { '❌' } else { "[$([char]0x00D7)]" }  # × (multiplication sign)
+    'warning'         = if ($PSVersionTable.PSVersion.Major -ge 7) { '⚠️' } else { "[$([char]0x26A0)]" }  # ⚠ (warning sign)
+    'info'            = if ($PSVersionTable.PSVersion.Major -ge 7) { 'ℹ️' } else { "[$([char]0x0069)]" }  # i (lowercase i)
+    'star'            = if ($PSVersionTable.PSVersion.Major -ge 7) { '⭐' } else { "[$([char]0x002A)]" }  # * (asterisk)
+    'party'           = if ($PSVersionTable.PSVersion.Major -ge 7) { '🎉' } else { "[$([char]0x005E)]" }  # ^ (caret)
+    'hourglass'       = if ($PSVersionTable.PSVersion.Major -ge 7) { '⏳' } else { "[$([char]0x007E)]" }  # ~ (tilde)
+    'unknown'         = if ($PSVersionTable.PSVersion.Major -ge 7) { '❓' } else { "[$([char]0x003F)]" }  # ? (question mark)
+    'right'           = if ($PSVersionTable.PSVersion.Major -ge 7) { '➡️' } else { "[$([char]0x00BB)]" }  # » (right double angle)
+    'left'            = if ($PSVersionTable.PSVersion.Major -ge 7) { '⬅️' } else { "[$([char]0x00AB)]" }  # « (left double angle)
 }
 
 function Get-Emoji {
@@ -34,26 +35,26 @@ function Get-Emoji {
 
         .PARAMETER Name
             The name of the emoji to retrieve. Valid values:
-            - checkmark (✅ or [√])
-            - cross (❌ or [x])
-            - warning (⚠️ or [!])
-            - info (ℹ️ or [i])
-            - star (⭐ or [*])
-            - party (🎉 or [^])
-            - hourglass (⏳ or [~])
-            - unknown (❓ or [?])
-            - right (➡️ or ->>)
-            - left (⬅️ or <<-)
+            - checkmark (✅ or √)
+            - cross (❌ or ×)
+            - warning (⚠️ or ⚠)
+            - info (ℹ️ or i)
+            - star (⭐ or *)
+            - party (🎉 or ^)
+            - hourglass (⏳ or ~)
+            - unknown (❓ or ?)
+            - right (➡️ or »)
+            - left (⬅️ or «)
 
         .EXAMPLE
             Write-Host "$(Get-Emoji checkmark) Success"
             # PowerShell 7+: ✅ Success
-            # PowerShell 5.1: [√] Success
+            # PowerShell 5.1: √ Success
 
         .EXAMPLE
             Write-Warning "$(Get-Emoji warning) Configuration file not found"
             # PowerShell 7+: ⚠️ Configuration file not found
-            # PowerShell 5.1: [!] Configuration file not found
+            # PowerShell 5.1: ⚠ Configuration file not found
     #>
     [CmdletBinding()]
     [OutputType([string])]
