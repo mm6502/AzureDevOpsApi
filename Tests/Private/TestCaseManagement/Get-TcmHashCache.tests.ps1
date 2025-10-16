@@ -106,12 +106,11 @@ Describe 'Update-TcmHashCacheEntry' {
         $testRoot = Join-Path $TestDrive 'TestCases'
         New-Item -Path $testRoot -ItemType Directory -Force | Out-Null
 
-        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -LocalHash 'abc123' -RemoteHash 'abc123'
+        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -Hash 'abc123'
 
         $cache = Get-TcmHashCache -TestCasesRoot $testRoot
         $cache['12345'] | Should -Not -BeNullOrEmpty
-        $cache['12345'].local | Should -Be 'abc123'
-        $cache['12345'].remote | Should -Be 'abc123'
+        $cache['12345'].hash | Should -Be 'abc123'
         $cache['12345'].lastSync | Should -Not -BeNullOrEmpty
     }
 
@@ -121,58 +120,57 @@ Describe 'Update-TcmHashCacheEntry' {
 
         $cache = @{
             '12345' = @{
-                local = 'old'
-                remote = 'old'
+                hash = 'old'
                 lastSync = '2025-10-13T09:00:00Z'
             }
         }
         Set-TcmHashCache -TestCasesRoot $testRoot -Cache $cache
 
-        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -LocalHash 'new' -RemoteHash 'new'
+        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -Hash 'new'
 
         $updatedCache = Get-TcmHashCache -TestCasesRoot $testRoot
-        $updatedCache['12345'].local | Should -Be 'new'
-        $updatedCache['12345'].remote | Should -Be 'new'
+        $updatedCache['12345'].hash | Should -Be 'new'
     }
 
-    It 'updates only local hash when remote not specified' {
+    It 'updates hash to new value' {
         $testRoot = Join-Path $TestDrive 'TestCases'
         New-Item -Path $testRoot -ItemType Directory -Force | Out-Null
 
         $cache = @{
             '12345' = @{
-                local = 'old'
-                remote = 'old'
+                hash = 'old'
                 lastSync = '2025-10-13T09:00:00Z'
             }
         }
         Set-TcmHashCache -TestCasesRoot $testRoot -Cache $cache
 
-        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -LocalHash 'new-local'
+        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -Hash 'new-hash'
 
         $updatedCache = Get-TcmHashCache -TestCasesRoot $testRoot
-        $updatedCache['12345'].local | Should -Be 'new-local'
-        $updatedCache['12345'].remote | Should -Be 'old'
+        $updatedCache['12345'].hash | Should -Be 'new-hash'
     }
 
-    It 'updates only remote hash when local not specified' {
+    It 'preserves cache structure after update' {
         $testRoot = Join-Path $TestDrive 'TestCases'
         New-Item -Path $testRoot -ItemType Directory -Force | Out-Null
 
         $cache = @{
             '12345' = @{
-                local = 'old'
-                remote = 'old'
+                hash = 'old'
                 lastSync = '2025-10-13T09:00:00Z'
+            }
+            '67890' = @{
+                hash = 'other'
+                lastSync = '2025-10-13T10:00:00Z'
             }
         }
         Set-TcmHashCache -TestCasesRoot $testRoot -Cache $cache
 
-        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -RemoteHash 'new-remote'
+        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -Hash 'new-hash'
 
         $updatedCache = Get-TcmHashCache -TestCasesRoot $testRoot
-        $updatedCache['12345'].local | Should -Be 'old'
-        $updatedCache['12345'].remote | Should -Be 'new-remote'
+        $updatedCache['12345'].hash | Should -Be 'new-hash'
+        $updatedCache['67890'].hash | Should -Be 'other'
     }
 
     It 'updates lastSync timestamp' {
@@ -182,14 +180,13 @@ Describe 'Update-TcmHashCacheEntry' {
         $oldTimestamp = '2025-10-13T09:00:00Z'
         $cache = @{
             '12345' = @{
-                local = 'old'
-                remote = 'old'
+                hash = 'old'
                 lastSync = $oldTimestamp
             }
         }
         Set-TcmHashCache -TestCasesRoot $testRoot -Cache $cache
 
-        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -LocalHash 'new'
+        Update-TcmHashCacheEntry -TestCasesRoot $testRoot -TestCaseId '12345' -Hash 'new'
 
         $updatedCache = Get-TcmHashCache -TestCasesRoot $testRoot
         $updatedCache['12345'].lastSync | Should -Not -Be $oldTimestamp

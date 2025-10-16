@@ -12,7 +12,7 @@ Key features:
 - List and inspect repositories, commits and diffs.
 - Retrieve pull requests and their statuses.
 - Export release notes data to Excel and Markdown.
-- Manage test cases with YAML file support.
+- Manage test cases with git-like YAML workflow (local-first with bidirectional sync).
 
 Compatibility:
 
@@ -25,6 +25,7 @@ Server (with appropriate API compatibility).
 
 - [Documentation overview](./Docs/readme.md)
 - [Functions reference](./Docs/functions/AzureDevOpsApi.md)
+- [TestCaseManagement overview](./Docs/test_case_management.md) - Git-like workflow for test cases
 
 ## Quick start
 

@@ -1,7 +1,5 @@
 ## AzureDevOpsApi — Essentials for AI agents
 
-Current work on TestCaseManagement in file `Docs/TestCaseManagement-Architecture.md`.
-
 - Project:
 
     - PowerShell module.
@@ -14,8 +12,9 @@ Current work on TestCaseManagement in file `Docs/TestCaseManagement-Architecture
     - `Public/` (exported cmdlets),
     - `Private/` (helpers),
     - `Tests/`,
-    - `Docs/` (markdown docs),
+    - `Docs/` (overviews docs),
     - `Docs/functions/` (auto-generated function docs).
+    - `Docs/examples/` (examples docs).
 
 - Loader: `AzureDevOpsApi.psm1` dot-sources `Init/Init.ps1` then all `Private/*.ps1` and `Public/*.ps1`.
   Has `$ForTests` argument to enable exporting Private functions for tests. Usage:
@@ -39,7 +38,7 @@ Current work on TestCaseManagement in file `Docs/TestCaseManagement-Architecture
 
 - Coding:
 
-    - **Important:** Always reload the module before trying new code to ensure changes are applied. Use: `Import-Module .\AzureDevOpsApi.psd1 -ArgumentList @($true) -Force`
+    - **Important:** Always reload the module before trying new code to ensure changes are applied.
     - Use spaces for indentation (4 spaces).
     - When calling functions with more than 3 parameters (and not using splatting), use multiline
       formatting for readability, e.g.:
@@ -52,7 +51,7 @@ Current work on TestCaseManagement in file `Docs/TestCaseManagement-Architecture
     - Don't rename/change globals without updating `Init/Globals.ps1` and tests.
     - Put new cmdlets in `Public/` or `Private/` with `CmdletBinding()`, add Pester tests in `Tests/`.
     - Each subfolder in `Tests/` corresponds to a module subfolder (`Public/` or `Private/`),
-      and contains `BeforeAll.ps1` for setup and test files in that directory.
+      and contains `BeforeAll.ps1` for setup test files in that directory.
     - Test scripts in `Tests/` begin with importing `.\BeforeAll.ps1` file from the same directory for
       basic setup and module initialization, e.g.:
         ```powershell

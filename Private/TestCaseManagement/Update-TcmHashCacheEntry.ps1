@@ -45,5 +45,6 @@ function Update-TcmHashCacheEntry {
     # Save updated cache
     Set-TcmHashCache -TestCasesRoot $TestCasesRoot -Cache $cache
 
-    Write-Verbose "Updated hash cache entry for test case '$TestCaseId' (hash: $($Hash.Substring(0, 8))...)"
+    $hashPreview = if ($Hash.Length -gt 8) { "$($Hash.Substring(0, 8))..." } else { $Hash }
+    Write-Verbose "Updated hash cache entry for test case '$TestCaseId' (hash: $hashPreview)"
 }
