@@ -61,6 +61,12 @@ Work with custom fields, bulk operations, and performance optimization.
 
 **Topics**: Custom fields, bulk processing, advanced patterns, performance optimization
 
+### 7. [Troubleshooting](./troubleshooting.md)
+
+Diagnose and fix common issues with authentication, configuration, sync errors, and performance.
+
+**Topics**: Authentication errors (401, 403), configuration issues, sync conflicts, data corruption, performance tuning, debug mode
+
 ## Reference
 
 ### Core Functions
@@ -108,19 +114,32 @@ $tc.SyncStatus  # synced, local-changes, remote-changes, conflict, etc.
 
 ## Troubleshooting
 
+For detailed troubleshooting help, see **[Troubleshooting Guide](./troubleshooting.md)**.
+
+**Quick Diagnostics:**
+
+```powershell
+# Check PAT token
+$env:AZURE_DEVOPS_PAT
+
+# Verify config exists
+Test-Path .\.tcm-config.yaml
+
+# Enable verbose output
+$VerbosePreference = 'Continue'
+Get-TcmTestCase -Verbose
+```
+
 **Common Issues:**
 
-- Connection errors: Verify Azure DevOps credentials are configured correctly
-- YAML syntax errors: Use `-Verbose` to see detailed parsing errors
-- Sync conflicts: Use `Get-TcmTestCase` to inspect both LocalData and RemoteData
-- Missing test cases: Check exclude patterns in `.tcm-config.yaml`
+- **401 Unauthorized**: PAT token missing or expired → Check `$env:AZURE_DEVOPS_PAT`
+- **403 Forbidden**: PAT lacks "Work Items: Read & write" permission
+- **Config not found**: No `.tcm-config.yaml` in current or parent directories
+- **Invalid YAML**: Indentation errors (must use 2 spaces) or unquoted special characters
+- **Sync conflicts**: Both local and remote changed → Use `-Force` with `-Push` or `-Pull`
+- **Slow performance**: Syncing 1000+ test cases → Sync by folder or only changed files
 
-**Debugging:**
-
-- Use `-Verbose` parameter on all cmdlets for detailed output
-- Check `.tcm-hashes.json` to see cached sync states
-- Review Azure DevOps work item permissions
-- Inspect YAML files for syntax errors with online validators
+See the [full troubleshooting guide](./troubleshooting.md) for detailed solutions and debugging steps.
 
 ## Related Documentation
 

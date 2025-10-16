@@ -1,8 +1,8 @@
 # TestCaseManagement Documentation - Progress Tracker
 
-**Last Updated:** October 16, 2025, 3:00 PM
+**Last Updated:** October 16, 2025, 4:00 PM
 **Branch:** tcm
-**Overall Progress:** 26% complete (6 of 23 issues)
+**Overall Progress:** 40% complete (8 of 20 issues)
 
 ---
 
@@ -11,16 +11,16 @@
 | Phase | Issues | Time Budget | Time Spent | Status |
 |-------|--------|-------------|------------|--------|
 | **Phase 1** (Critical) | 5 | 6-8h | 4.5h | ✅ **COMPLETE** |
-| **Phase 2** (High Priority) | 4 | 6-8h | 0.75h | 🔄 **In Progress** (25%) |
+| **Phase 2** (High Priority) | 5 | 6-8h | 5.25h | 🔄 **In Progress** (60%) |
 | **Phase 3** (Medium Priority) | 3 | 4-6h | 0h | 📋 Planned |
 | **Phase 4** (Polish) | 3 | 7+h | 0h | 📋 Planned |
-| **TOTAL** | **15** | **23-29h** | **5.25h** | **26% done** |
+| **TOTAL** | **16** | **24-30h** | **9.75h** | **40% done** |
 
-**Next Up:** Issue #6 - Troubleshooting Guide (2 hours)
+**Next Up:** Issue #8 - Git Integration Guide (1.5 hours)
 
 ---
 
-## ✅ Completed Issues (6/15)
+## ✅ Completed Issues (8/16)
 
 ### Phase 1: Critical Fixes (5/5 complete - 4.5h)
 
@@ -67,23 +67,30 @@
   - Token rotation strategy
 - **Also Updated:** `examples/readme.md`, `test-case-management/01-setup-configuration.md`
 
+#### #6 - Troubleshooting Guide ✅ (2.5h)
+- **Problem:** No comprehensive troubleshooting documentation
+- **Solution:** Created detailed troubleshooting guide with diagnostics and solutions
+- **New File:** `Docs/examples/test-case-management/troubleshooting.md`
+- **Content:**
+  - Quick diagnostics (using Test-ApiCredential)
+  - Authentication errors (401, 403) with solutions
+  - Configuration errors (missing/invalid config, YAML syntax)
+  - Sync errors (conflicts, timeouts, batching)
+  - Data corruption recovery (hash files, YAML files)
+  - Performance optimization (1000+ test cases)
+  - Debug mode usage
+  - Common scenarios and FAQ
+- **Also Created:** `Public/Api/Test-ApiCredential.ps1` - New public function for validating PAT tokens
+- **Also Created:** `Tests/Public/Api/Test-ApiCredential.tests.ps1` - 11 unit tests (all passing)
+- **Also Updated:** `test-case-management/readme.md` (added troubleshooting section with link)
+
 ---
 
-## ⬜ Remaining Issues (9/15)
+## ⬜ Remaining Issues (8/16)
 
-### Phase 2: High Priority (3 issues - ~5.5h)
+### Phase 2: High Priority (2 issues - ~3.5h)
 
-#### #6 - Troubleshooting Guide ⬜ (2h) - **NEXT**
-**Create:** `troubleshooting.md`
-**Cover:**
-- Authentication errors (401 Unauthorized, 403 Forbidden)
-- Configuration issues (file not found, invalid YAML)
-- Sync errors (conflicts, timeouts)
-- Data corruption (corrupted .tcm-hashes.json)
-- Performance issues (slow sync with 1000+ cases)
-- Debug mode usage
-
-#### #8 - Git Integration Guide ⬜ (1.5h)
+#### #8 - Git Integration Guide ⬜ (1.5h) - **NEXT**
 **Update:** `readme.md`
 **Add Section:**
 - What to commit vs ignore
@@ -128,20 +135,23 @@
 
 ## Success Criteria
 
-### Must Have (Phase 1-2) - 62.5% Complete
+### Must Have (Phase 1-2) - 75% Complete
+
 - ✅ Quick start works without errors
 - ✅ All public functions are clear
 - ✅ Object structure is documented
 - ✅ PAT creation is documented
-- ⬜ Basic troubleshooting available
+- ✅ Basic troubleshooting available
 - ⬜ Git integration explained
 
 ### Should Have (Phase 3) - 0% Complete
+
 - ⬜ Custom fields guidance
 - ⬜ Performance recommendations
 - ⬜ Consistent formatting
 
 ### Nice to Have (Phase 4) - 0% Complete
+
 - ⬜ Visual diagrams
 - ⬜ FAQ section
 - ⬜ Video tutorials
@@ -150,10 +160,14 @@
 
 ## Files Modified
 
-### Created
-- `Docs/examples/credentials/00-creating-pat-token.md` (PAT guide)
+### Created (3 files)
 
-### Updated (11 files)
+- `Docs/examples/credentials/00-creating-pat-token.md` (PAT guide)
+- `Docs/examples/test-case-management/troubleshooting.md` (Troubleshooting guide)
+- `Public/Api/Test-ApiCredential.ps1` (New public function for credential validation)
+- `Tests/Public/Api/Test-ApiCredential.tests.ps1` (11 unit tests - all passing)
+
+### Updated (12 files)
 - `Docs/test_case_management.md` (Object Structure, Sync Operations)
 - `Docs/functions/Get-TcmTestCase.md` (fixed example)
 - `Docs/functions/Sync-TcmTestCase.md` (parameter sets)
@@ -165,8 +179,10 @@
 - `Docs/examples/test-case-management/04-sync-workflows.md` (public functions + sync docs)
 - `Docs/examples/test-case-management/05-conflict-resolution.md` (public functions + future warning)
 - `Docs/examples/test-case-management/06-advanced-scenarios.md` (public functions)
+- `Docs/examples/test-case-management/readme.md` (property paths + troubleshooting section)
 
 ### Deleted (2 files)
+
 - `Docs/functions/Sync-TcmTestCaseToRemote.md` (private)
 - `Docs/functions/Sync-TcmTestCaseFromRemote.md` (private)
 
@@ -175,12 +191,15 @@
 ## Validation Status
 
 ### Automated
+
 - ✅ grep: No private function references
 - ✅ grep: No incorrect property paths (except in planning docs)
 - ✅ Doc generation: SUCCESS (exit 0)
+- ✅ Test-ApiCredential: 11/11 tests passing
 - ⚠️ Markdown linter: Formatting warnings (non-blocking)
 
 ### Manual
+
 - ⬜ Quick start walkthrough
 - ⬜ All examples tested
 - ⬜ Fresh environment test
@@ -190,25 +209,29 @@
 
 ## Next Steps
 
-### 1. Continue with Issue #6 (Recommended)
-Create troubleshooting guide - high user value, 2-hour investment
+### 1. Continue with Issue #8 (Recommended)
+
+Create Git integration guide - essential for team workflows, 1.5-hour investment
 
 ### 2. Take a Break for Testing
+
 - Manual walkthrough of Quick Start
 - Test updated examples
+- Test new Test-ApiCredential function
 - Verify links
 - Get colleague review
 
-### 3. Skip to Issues #8 or #9
-- Git integration (1.5h)
+### 3. Skip to Issue #9
+
 - Team workflow (2h)
 
 ---
 
 ## Notes
 
-- **Ahead of Schedule:** Phase 1 completed 44-56% under budget
+- **Ahead of Schedule:** Phase 1 completed 44-56% under budget, Phase 2 at 60%
 - **Clean State:** All grep verifications pass
 - **Quality Focus:** All examples now use public API only
 - **Consistency:** Property access patterns standardized
 - **Security:** Comprehensive PAT guide with best practices
+- **New Feature:** Test-ApiCredential function for credential validation (11 tests passing)

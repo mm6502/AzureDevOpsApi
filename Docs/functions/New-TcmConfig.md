@@ -1,4 +1,4 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
@@ -89,7 +89,7 @@ Defaults to the current working directory.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: Path, TestCasesRoot
 
 Required: False
 Position: 4
