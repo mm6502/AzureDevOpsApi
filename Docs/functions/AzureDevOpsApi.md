@@ -446,6 +446,12 @@ Submits pull requests for the specified repositories and branches.
 ### [Submit-PullRequests](Submit-PullRequests.md)
 Submits pull requests for the specified repositories and branches.
 
+### [Sync-TcmTestCaseFromRemote](Sync-TcmTestCaseFromRemote.md)
+Pulls test case(s) from Azure DevOps to local YAML files.
+
+### [Sync-TcmTestCaseToRemote](Sync-TcmTestCaseToRemote.md)
+Pushes a local test case to Azure DevOps.
+
 ### [Test-ApiCredential](Test-ApiCredential.md)
 Tests Azure DevOps API credentials to verify they are valid and have required permissions.
 

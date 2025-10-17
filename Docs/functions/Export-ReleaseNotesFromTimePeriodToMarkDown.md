@@ -15,7 +15,7 @@ Runs compilation of release notes data from Git based project and formats it in 
 ```
 Export-ReleaseNotesFromTimePeriodToMarkDown [[-CollectionUri] <Object>] [[-Project] <Object>]
  [[-DateFrom] <DateTime>] [[-DateTo] <DateTime>] [[-AsOf] <DateTime>] [-PassThru] [-UseConstantFileName]
- [[-Path] <Object>] [[-TimeZone] <String>] [[-Environment] <Object>] [[-ProgressPreference] <ActionPreference>]
+ [[-Path] <Object>] [[-TimeZone] <Object>] [[-Environment] <Object>] [[-ProgressPreference] <ActionPreference>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -210,7 +210,7 @@ Windows style zone ids, f.e.
 Default value is "Central Europe Standard Time".
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
