@@ -65,7 +65,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
         It 'Should return synced when hashes match' {
             # Arrange
             Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
-                @{ '123' = @{ local = 'same-hash'; remote = 'same-hash'; lastSync = '2024-01-01T00:00:00Z' } }
+                @{ '123' = @{ hash = 'same-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
             $inputObject = [PSCustomObject]@{
                 Id = '123'
@@ -92,9 +92,9 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
 
         It 'Should return local-changes when local hash differs' {
             # Arrange
-            # Mock cache to have existing entry with different local hash
+            # Mock cache to have existing entry - local changed but remote unchanged
             Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
-                @{ '123' = @{ local = 'old-local-hash'; remote = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
+                @{ '123' = @{ hash = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
             $inputObject = [PSCustomObject]@{
                 Id = '123'
@@ -119,11 +119,11 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $result.SyncStatus | Should -Be 'local-changes'
         }
 
-        It 'Should return local-changes when local hash differs from remote' {
+        It 'Should return remote-changes when remote hash differs from cache' {
             # Arrange
-            # Mock cache to have existing entry with matching remote hash but different local hash
+            # Mock cache to have existing entry - remote changed but local unchanged
             Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
-                @{ '123' = @{ local = 'old-local-hash'; remote = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
+                @{ '123' = @{ hash = 'local-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
             $inputObject = [PSCustomObject]@{
                 Id = '123'
@@ -145,14 +145,43 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
 
             # Assert
-            $result.SyncStatus | Should -Be 'local-changes'
+            $result.SyncStatus | Should -Be 'remote-changes'
+        }
+
+        It 'Should return conflict when both local and remote changed' {
+            # Arrange
+            # Mock cache - both local and remote changed from cached value
+            Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
+                @{ '123' = @{ hash = 'old-hash'; lastSync = '2024-01-01T00:00:00Z' } }
+            }
+            $inputObject = [PSCustomObject]@{
+                Id = '123'
+                LocalData = @{
+                    id = '123'
+                    title = 'Local Test Case'
+                }
+                RemoteData = @{
+                    id = '123'
+                    title = 'Remote Test Case'
+                }
+                LocalDataHash = 'new-local-hash'
+                RemoteDataHash = 'new-remote-hash'
+                SyncStatus = $null
+            }
+            $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
+
+            # Act
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+
+            # Assert
+            $result.SyncStatus | Should -Be 'conflict'
         }
 
         It 'Should handle remote fetch failure gracefully' {
             # Arrange
             # Mock cache to have existing entry (previously synced)
             Mock -ModuleName $ModuleName -CommandName Get-TcmHashCache -MockWith {
-                @{ '123' = @{ local = 'local-hash'; remote = 'remote-hash'; lastSync = '2024-01-01T00:00:00Z' } }
+                @{ '123' = @{ hash = 'cached-hash'; lastSync = '2024-01-01T00:00:00Z' } }
             }
             $inputObject = [PSCustomObject]@{
                 Id = '123'

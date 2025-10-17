@@ -20,8 +20,7 @@ Describe 'Get-TcmHashCache' {
         $cacheFile = Join-Path $testRoot '.tcm-hashes.json'
         $testCache = @{
             '12345' = @{
-                local = 'abc123'
-                remote = 'abc123'
+                hash = 'abc123'
                 lastSync = '2025-10-13T10:00:00Z'
             }
         }
@@ -32,8 +31,8 @@ Describe 'Get-TcmHashCache' {
         $cache | Should -Not -BeNullOrEmpty
         $cache.Count | Should -Be 1
         $cache['12345'] | Should -Not -BeNullOrEmpty
-        $cache['12345'].local | Should -Be 'abc123'
-        $cache['12345'].remote | Should -Be 'abc123'
+        $cache['12345'].hash | Should -Be 'abc123'
+        $cache['12345'].lastSync | Should -Not -BeNullOrEmpty
     }
 
     It 'returns empty hashtable when cache file is corrupt' {
@@ -57,8 +56,7 @@ Describe 'Set-TcmHashCache' {
 
         $cache = @{
             '12345' = @{
-                local = 'abc123'
-                remote = 'def456'
+                hash = 'abc123'
                 lastSync = '2025-10-13T10:00:00Z'
             }
         }
@@ -69,8 +67,8 @@ Describe 'Set-TcmHashCache' {
         $cacheFile | Should -Exist
 
         $savedCache = Get-TcmHashCache -TestCasesRoot $testRoot
-        $savedCache['12345'].local | Should -Be 'abc123'
-        $savedCache['12345'].remote | Should -Be 'def456'
+        $savedCache['12345'].hash | Should -Be 'abc123'
+        $savedCache['12345'].lastSync | Should -Not -BeNullOrEmpty
     }
 
     It 'overwrites existing cache file' {
@@ -79,8 +77,7 @@ Describe 'Set-TcmHashCache' {
 
         $cache1 = @{
             '12345' = @{
-                local = 'old'
-                remote = 'old'
+                hash = 'old'
                 lastSync = '2025-10-13T09:00:00Z'
             }
         }
@@ -88,16 +85,15 @@ Describe 'Set-TcmHashCache' {
 
         $cache2 = @{
             '12345' = @{
-                local = 'new'
-                remote = 'new'
+                hash = 'new'
                 lastSync = '2025-10-13T10:00:00Z'
             }
         }
         Set-TcmHashCache -TestCasesRoot $testRoot -Cache $cache2
 
         $savedCache = Get-TcmHashCache -TestCasesRoot $testRoot
-        $savedCache['12345'].local | Should -Be 'new'
-        $savedCache['12345'].remote | Should -Be 'new'
+        $savedCache['12345'].hash | Should -Be 'new'
+        $savedCache['12345'].lastSync | Should -Not -BeNullOrEmpty
     }
 }
 
