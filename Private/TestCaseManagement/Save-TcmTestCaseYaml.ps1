@@ -40,7 +40,8 @@ function Save-TcmTestCaseYaml {
                 }
 
                 # Combine folder path with existing file path
-                $folderPath = $folderPath.TrimEnd('/')
+                $dirSep = [System.IO.Path]::DirectorySeparatorChar
+                $folderPath = $folderPath.TrimEnd($dirSep)
                 $fileName = [System.IO.Path]::GetFileName($FilePath)
                 $FilePath = Join-Path $folderPath $fileName
 
