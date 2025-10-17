@@ -20,7 +20,7 @@ function ConvertTo-TimeZoneDateTime {
     param(
         [Alias('Value', 'Time')]
         $DateTime,
-        $TimeZone = 'UTC'
+        $TimeZone = [System.TimeZoneInfo]::Local
     )
 
     process {

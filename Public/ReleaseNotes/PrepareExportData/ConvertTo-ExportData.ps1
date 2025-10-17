@@ -41,6 +41,9 @@ function ConvertTo-ExportData {
 
         .PARAMETER ReleaseBranch
             The release branch of TFVC repositories.
+
+        .PARAMETER TimeZone
+            Time zone identifier for displaying dates in the export.
     #>
 
     [OutputType('PSTypeNames.AzureDevOpsApi.ExportData')]
@@ -62,7 +65,8 @@ function ConvertTo-ExportData {
         $ByUser,
         $TargetBranch,
         $TrunkBranch,
-        $ReleaseBranch
+        $ReleaseBranch,
+        $TimeZone = [System.TimeZoneInfo]::Local
     )
 
     begin {
@@ -92,7 +96,8 @@ function ConvertTo-ExportData {
             -ByUser $ByUser `
             -TargetBranch $TargetBranch `
             -TrunkBranch $TrunkBranch `
-            -ReleaseBranch $ReleaseBranch
+            -ReleaseBranch $ReleaseBranch `
+            -TimeZone $TimeZone
     }
 
     process {

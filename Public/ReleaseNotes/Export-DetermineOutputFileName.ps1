@@ -27,7 +27,7 @@ function Export-DetermineOutputFileName {
         $Path,
         $FileExtension,
         [switch] $UseConstantFileName,
-        $TimeZone = 'UTC'
+        $TimeZone = [System.TimeZoneInfo]::Local
     )
 
     process {

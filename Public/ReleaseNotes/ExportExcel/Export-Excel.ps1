@@ -27,7 +27,7 @@ function Export-Excel {
             IANA style zone ids, f.e. "Europe/Bratislava"
             Windows style zone ids, f.e. "Central Europe Standard Time"
 
-            Default value is "Central Europe Standard Time".
+            Default value is the local system time zone.
 
         .PARAMETER PassThru
             Flag, whether return the generated file.
@@ -47,7 +47,7 @@ function Export-Excel {
 
         $Path = '.\',
 
-        [string] $TimeZone = 'Central Europe Standard Time',
+        $TimeZone = [System.TimeZoneInfo]::Local,
 
         [switch] $UseConstantFileName,
 
@@ -71,7 +71,11 @@ function Export-Excel {
         }
 
         # Determine the time zone
-        $targetTimeZone = Get-CustomTimeZone -Id $TimeZone
+        if ($TimeZone -is [TimeZoneInfo]) {
+            $targetTimeZone = $TimeZone
+        } else {
+            $targetTimeZone = Get-CustomTimeZone -Id $TimeZone
+        }
 
         # Determine the output file name
         $Path = Export-DetermineOutputFileName `
