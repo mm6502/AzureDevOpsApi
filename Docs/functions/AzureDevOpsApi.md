@@ -443,14 +443,17 @@ Splits the given URI of an Azure DevOps collection into the collection URI and t
 ### [Submit-PullRequests](Submit-PullRequests.md)
 Submits pull requests for the specified repositories and branches.
 
-### [Sync-TcmTestCase](Sync-TcmTestCase.md)
-Synchronizes test cases between local YAML files and Azure DevOps.
+### [Submit-PullRequests](Submit-PullRequests.md)
+Submits pull requests for the specified repositories and branches.
 
 ### [Sync-TcmTestCaseFromRemote](Sync-TcmTestCaseFromRemote.md)
 Pulls test case(s) from Azure DevOps to local YAML files.
 
 ### [Sync-TcmTestCaseToRemote](Sync-TcmTestCaseToRemote.md)
 Pushes a local test case to Azure DevOps.
+
+### [Test-ApiCredential](Test-ApiCredential.md)
+Tests Azure DevOps API credentials to verify they are valid and have required permissions.
 
 ### [Test-DateTimeRange](Test-DateTimeRange.md)
 Decides whether given $Value is in range \<$From, $To\>.

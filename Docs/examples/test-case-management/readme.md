@@ -1,202 +1,500 @@
 # TestCaseManagement Examples
 
-This section contains practical examples for using the TestCaseManagement feature to author and synchronize test cases with Azure DevOps using YAML files.
+Detailed examples and walkthroughs for using TestCaseManagement with Azure DevOps.
 
-## Overview
+> **Quick Reference**: See [TestCaseManagement Overview](../../test_case_management.md) for a concise feature summary.
 
-TestCaseManagement enables user-friendly authoring of test cases through direct YAML file editing. Create and edit test case files in any text editor, then synchronize them with Azure DevOps. This approach provides:
+## What You'll Learn
 
-- **Human-readable format**: YAML files are easy to read, write, and version control
-- **Rich editing experience**: Use your favorite editor with syntax highlighting and validation
-- **Offline authoring**: Create test cases without Azure DevOps connectivity
-- **Version control friendly**: Track changes and collaborate using git
-- **Direct editing**: No complex commands - just edit YAML files like any other document
-- **Comprehensive documentation**: Step-by-step examples covering all features and scenarios
+These examples demonstrate practical workflows for managing test cases with a git-like approach:
 
-## Key Concepts
+- Creating and configuring test case repositories
+- Authoring test cases in YAML format
+- Synchronizing with Azure DevOps using `-Push`, `-Pull`, `-Force`
+- Resolving conflicts with 3-way merge detection
+- Organizing test cases in folder hierarchies
+- Advanced scenarios for custom fields and bulk operations
 
-### Direct YAML File Editing
-
-**Primary Method**: Test cases are authored by directly editing YAML files in your preferred text editor. This is the main workflow for creating and maintaining test cases.
-
-### YAML Structure
-
-Test cases use a structured YAML format that maps directly to Azure DevOps work item fields:
-
-```yaml
-testCase:
-  id: TC001
-  title: "User Login Validation"
-  areaPath: "Project\\Area\\Component"
-  steps:
-    - stepNumber: 1
-      action: "Navigate to login page"
-      expectedResult: "Login form is displayed"
-```
-
-### Configuration File
-
-A `.tcm-config.yaml` file defines connection settings, sync preferences, and defaults:
-
-```yaml
-azureDevOps:
-  collectionUri: "https://dev.azure.com/your-org"
-  project: "YourProject"
-  pat: "${AZURE_DEVOPS_PAT}"
-
-sync:
-  direction: "bidirectional"
-  conflictResolution: "manual"
-```
-
-### Folder Organization
-
-Test cases are organized in a hierarchical folder structure that can be customized:
-
-```text
-test-cases/
-├── authentication/
-│   ├── TC001-login-validation.yaml
-│   └── TC002-password-reset.yaml
-├── user-management/
-│   ├── TC003-profile-update.yaml
-│   └── TC004-account-deletion.yaml
-└── .tcm-config.yaml
-```
-
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Azure DevOps organization and project
-- Personal Access Token with work item permissions
+- Azure DevOps credentials configured (see [credentials examples](../credentials/))
 - PowerShell with AzureDevOpsApi module
 
-### Quick Start Workflow
+## Example Walkthroughs
 
-1. **[Setup Configuration](./01-setup-configuration.md)** - Create `.tcm-config.yaml`
-2. **[Create Test Cases](./02-creating-test-cases.md)** - Edit YAML files directly in your text editor
-3. **[Organize Folders](./03-folder-organization.md)** - Structure your test case repository
-4. **[Sync Operations](./04-sync-workflows.md)** - Push/pull changes with Azure DevOps
-5. **[Handle Conflicts](./05-conflict-resolution.md)** - Resolve sync conflicts when they occur
-6. **[Advanced Features](./06-advanced-scenarios.md)** - Use custom fields and bulk operations
+Follow these examples in order for a complete learning path:
 
-## Detailed Examples
+### 1. [Setup Configuration](./01-setup-configuration.md)
 
-### [Setup Configuration](./01-setup-configuration.md)
+Create `.tcm-config.yaml` with connection settings, sync preferences, and exclude patterns.
 
-**Learn how to:**
+**Topics**: Configuration file structure, connection parameters, sync options
 
-- Create and configure `.tcm-config.yaml`
-- Set up Azure DevOps connection parameters
-- Configure sync preferences and defaults
-- Manage environment variables for credentials
+### 2. [Creating Test Cases](./02-creating-test-cases.md)
 
-**Essential first step for using TestCaseManagement.**
+Create test case YAML files and understand the schema structure.
 
-### [Creating Test Cases](./02-creating-test-cases.md)
+**Topics**: YAML structure, numeric vs non-numeric IDs, test steps, `New-TcmTestCase`, `Get-TcmTestCase`
 
-**Learn how to:**
+### 3. [Folder Organization](./03-folder-organization.md)
 
-- Author test cases by editing YAML files directly
-- Understand the complete YAML structure and schema
-- Add test steps, preconditions, and expected results
-- Include attachments, custom fields, and tags
-- Use your favorite text editor with syntax highlighting
+Organize test cases in folder hierarchies and map to Azure DevOps area paths.
 
-**Core workflow: Direct YAML file editing for user-friendly test case authoring.**
+**Topics**: Folder structures, area path mapping, exclude patterns, moving test cases
 
-### [Folder Organization](./03-folder-organization.md)
+### 4. [Sync Workflows](./04-sync-workflows.md)
 
-**Learn how to:**
+Master git-like synchronization with `-Push`, `-Pull`, and `-Force` operations.
 
-- Organize test cases in flexible folder structures
-- Understand how folder organization affects sync operations
-- Create nested folder hierarchies for different test types
-- Move test cases between folders without breaking sync
-- Implement organization patterns for teams and projects
+**Topics**: Push/pull operations, force overwrite, bidirectional sync, sync states, bulk operations
 
-**Best practices for structuring your test case repository.**
+### 5. [Conflict Resolution](./05-conflict-resolution.md)
 
-### [Sync Workflows](./04-sync-workflows.md)
+Understand 3-way merge conflict detection and resolution strategies.
 
-**Learn how to:**
+**Topics**: Conflict detection, resolution strategies (Manual, LocalWins, RemoteWins), `Resolve-TcmTestCaseConflict`
 
-- Perform push operations to send local changes to Azure DevOps
-- Execute pull operations to retrieve remote changes
-- Implement bidirectional sync workflows
-- Handle bulk synchronization of multiple test cases
-- Monitor sync status and resolve common issues
+### 6. [Advanced Scenarios](./06-advanced-scenarios.md)
 
-**Complete guide to synchronizing test cases with Azure DevOps.**
+Work with custom fields, bulk operations, and performance optimization.
 
-### [Conflict Resolution](./05-conflict-resolution.md)
+**Topics**: Custom fields, bulk processing, advanced patterns, performance optimization
 
-**Learn how to:**
+### 7. [Troubleshooting](./troubleshooting.md)
 
-- Detect synchronization conflicts between local and remote test cases
-- Understand different conflict resolution strategies
-- Use local-wins, remote-wins, and manual resolution approaches
-- Handle common conflict scenarios (title changes, step modifications)
-- Implement best practices for avoiding conflicts
+Diagnose and fix common issues with authentication, configuration, sync errors, and performance.
 
-**Essential skills for collaborative test case management.**
+**Topics**: Authentication errors (401, 403), configuration issues, sync conflicts, data corruption, performance tuning, debug mode
 
-### [Advanced Scenarios](./06-advanced-scenarios.md)
+## Reference
 
-**Learn how to:**
+### Core Functions
 
-- Work with custom fields and organization-specific work item fields
-- Perform bulk operations on multiple test cases
-- Implement advanced integration patterns
-- Handle parameterized test cases and shared test steps
-- Optimize performance for large-scale operations
+| Function | Purpose |
+|----------|---------|
+| `New-TcmConfig` | Create `.tcm-config.yaml` configuration file |
+| `New-TcmTestCase` | Create new test case YAML file |
+| `Get-TcmTestCase` | Retrieve test cases (hybrid: local YAML + remote API) |
+| `Sync-TcmTestCase` | Synchronize with git-like `-Push`, `-Pull`, `-Force` options |
+| `Resolve-TcmTestCaseConflict` | Manually resolve sync conflicts |
 
-**Advanced techniques for power users and enterprise deployments.**
+### Common Patterns
 
-## Sync Operations
+**Query and filter test cases:**
 
-After authoring test cases through YAML file editing, use these cmdlets for synchronization with Azure DevOps:
+```powershell
+Get-TcmTestCase | Where-Object { $_.LocalData.testCase.state -eq "Ready" }
+Get-TcmTestCase | Where-Object { $_.SyncStatus -eq "local-changes" }
+```
 
-- `Sync-TcmTestCase` - Bidirectional sync with conflict detection
-- `Get-TcmTestCase` - Retrieve test cases from Azure DevOps
-- `Resolve-TcmTestCaseConflict` - Handle sync conflicts
+**Sync specific test cases:**
 
-## Advanced Features
+```powershell
+"TC001", "TC002" | Sync-TcmTestCase -Push
+Get-TcmTestCase | Where-Object { $_.SyncStatus -eq "local-changes" } | Sync-TcmTestCase -Push
+```
 
-- **Custom Fields**: Support for organization-specific work item fields and metadata
-- **Bulk Operations**: Process multiple test cases efficiently with batch processing
-- **Conflict Resolution**: Manual, local-wins, remote-wins strategies with detailed examples
-- **Attachment Sync**: Include screenshots and documents with test steps
-- **Parameterized Tests**: Support for test case parameters and shared test steps
-- **Performance Optimization**: Techniques for large-scale test case management
-- **Integration Patterns**: Advanced Azure DevOps integration and automation
+**Inspect dual data model:**
+
+```powershell
+$tc = Get-TcmTestCase -InputObject "12345"
+$tc.LocalData   # From YAML file
+$tc.RemoteData  # From Azure DevOps API
+$tc.SyncStatus  # synced, local-changes, remote-changes, conflict, etc.
+```
 
 ## Best Practices
 
-- **Version Control**: Commit YAML files to git for change tracking
-- **Naming Conventions**: Use consistent ID prefixes (TC001, TC002, etc.)
-- **Regular Sync**: Keep local and remote test cases synchronized
-- **Backup**: Maintain backups before major sync operations
-- **Validation**: Use schema validation before syncing
+- **Version Control**: Commit YAML files and `.tcm-hashes.json` to git
+- **Naming Conventions**: Use consistent ID prefixes (TC001, TC002) and descriptive filenames
+- **Regular Sync**: Synchronize frequently to minimize conflicts
+- **Exclude Patterns**: Configure `.tcm-config.yaml` to skip draft/template files
+- **Team Workflow**: Share `.tcm-hashes.json` for team-wide conflict detection
+
+## Git Integration
+
+TestCaseManagement is designed to work seamlessly with Git version control, enabling team collaboration and change tracking for test cases.
+
+### What to Commit to Git
+
+**✅ DO commit these files:**
+
+```gitignore
+# Test case YAML files
+TestCases/**/*.yaml
+
+# Configuration
+.tcm-config.yaml
+
+# Hash tracking for sync state (essential for team collaboration)
+.tcm-hashes.json
+```
+
+**Why commit `.tcm-hashes.json`?**
+- Tracks sync state between local YAML and Azure DevOps
+- Enables 3-way merge conflict detection across team
+- Prevents false conflicts when multiple developers work simultaneously
+- Small file that changes incrementally
+
+### What NOT to Commit
+
+**❌ DON'T commit these files:**
+
+```gitignore
+# Temporary files
+*.tmp
+*.bak
+
+# Editor-specific files
+.vscode/
+.vs/
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Draft/work-in-progress test cases (optional)
+TestCases/Drafts/
+TestCases/**/*.draft.yaml
+```
+
+### Recommended .gitignore Template
+
+Add this to your repository's `.gitignore`:
+
+```gitignore
+# TestCaseManagement - DO commit .tcm-config.yaml and .tcm-hashes.json
+
+# Drafts and templates (optional - adjust to your workflow)
+**/Drafts/
+**/*.draft.yaml
+**/*.template.yaml
+
+# Backup files
+*.bak
+*.backup.yaml
+
+# Editor and IDE
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+```
+
+### Team Collaboration Workflow
+
+**Scenario:** Multiple developers working on test cases simultaneously
+
+**1. Initial Setup (each developer):**
+
+```powershell
+# Clone repository
+git clone https://your-repo.git
+cd your-repo/TestCases
+
+# Verify config exists
+Get-Content .\.tcm-config.yaml
+
+# Set up credentials (each developer uses their own PAT)
+$env:AZURE_DEVOPS_PAT = "your-personal-pat-token"
+```
+
+**2. Before Starting Work:**
+
+```powershell
+# Pull latest from Git
+git pull origin main
+
+# Sync from Azure DevOps to get latest test case updates
+Sync-TcmTestCase -Pull
+
+# Check sync status
+Get-TcmTestCase | Where-Object { $_.SyncStatus -ne "synced" }
+```
+
+**3. Making Changes:**
+
+```powershell
+# Edit test cases locally
+code TestCases/TC001-login.yaml
+
+# Or create new ones
+New-TcmTestCase -Id "TC050" -Title "New Login Test"
+```
+
+**4. Before Committing:**
+
+```powershell
+# Push your changes to Azure DevOps first
+Sync-TcmTestCase -Push
+
+# Verify sync
+Get-TcmTestCase | Select-Object Id, SyncStatus
+```
+
+**5. Commit to Git:**
+
+```powershell
+# Stage changes
+git add TestCases/
+git add .tcm-hashes.json  # Important!
+
+# Commit
+git commit -m "Added TC050: New login test with MFA validation"
+
+# Push to remote
+git push origin main
+```
+
+### Handling Git Merge Conflicts
+
+**Scenario:** Two developers modified the same test case
+
+**When Git reports conflict in YAML file:**
+
+```powershell
+# 1. Resolve the YAML file conflict manually in your editor
+code TestCases/TC001-login.yaml
+
+# 2. After resolving YAML, push to Azure DevOps
+Sync-TcmTestCase -Id "TC001" -Push -Force
+
+# 3. Mark as resolved in Git
+git add TestCases/TC001-login.yaml
+git add .tcm-hashes.json
+
+git commit -m "Resolved conflict in TC001"
+```
+
+**When Git reports conflict in `.tcm-hashes.json`:**
+
+```powershell
+# This is normal when multiple developers sync simultaneously
+
+# 1. Accept Git merge (usually auto-resolved)
+git add .tcm-hashes.json
+
+# 2. Re-sync to update hash tracking
+Sync-TcmTestCase -Pull
+Sync-TcmTestCase -Push
+
+# 3. Commit updated hashes
+git add .tcm-hashes.json
+git commit -m "Updated sync hashes after merge"
+```
+
+### Git + Azure DevOps Synchronization
+
+**Understanding the two layers:**
+
+```
+Local YAML Files (Git)
+       ↕ (Sync-TcmTestCase)
+Azure DevOps Work Items (API)
+```
+
+**Best practice workflow:**
+
+1. **Git = Source of Truth** for file structure and version history
+2. **Azure DevOps = Live Data** for active test execution and reporting
+3. **Sync regularly** to keep both in sync
+
+**Typical day:**
+
+```powershell
+# Morning: Get latest from team
+git pull
+Sync-TcmTestCase -Pull
+
+# Work on test cases...
+# Edit, create, modify YAML files
+
+# Before lunch: Push your work
+Sync-TcmTestCase -Push
+git add .
+git commit -m "Morning work: Updated smoke tests"
+git push
+
+# Afternoon: Continue...
+git pull  # Get team's changes
+Sync-TcmTestCase -Pull  # Get Azure DevOps updates
+```
+
+### Branch Workflows
+
+**Feature branch workflow:**
+
+```powershell
+# Create feature branch
+git checkout -b feature/new-api-tests
+
+# Work on test cases
+New-TcmTestCase -Id "TC100" -Title "API Authentication Test"
+Sync-TcmTestCase -Id "TC100" -Push
+
+# Commit to feature branch
+git add TestCases/TC100-api-auth.yaml
+git add .tcm-hashes.json
+git commit -m "Add API authentication tests"
+git push origin feature/new-api-tests
+
+# Create pull request for review...
+```
+
+**After PR merge:**
+
+```powershell
+# Switch back to main
+git checkout main
+git pull
+
+# Sync hashes (may show "remote-changes" for new test cases)
+Sync-TcmTestCase -Pull
+
+# Everything should be synced now
+Get-TcmTestCase | Select-Object Id, SyncStatus
+```
+
+### Common Git Scenarios
+
+**Scenario: Accidentally committed without pushing to Azure DevOps**
+
+```powershell
+# Your Git commit is ahead of Azure DevOps
+
+# Fix: Push to Azure DevOps
+Sync-TcmTestCase -Push
+
+# Update hashes in Git
+git add .tcm-hashes.json
+git commit -m "Update sync hashes"
+git push
+```
+
+**Scenario: Need to rollback test case to previous version**
+
+```powershell
+# Option 1: Git rollback (affects local YAML only)
+git checkout HEAD~1 -- TestCases/TC001-login.yaml
+Sync-TcmTestCase -Id "TC001" -Push -Force  # Overwrite Azure DevOps
+
+# Option 2: Pull from Azure DevOps (if Azure DevOps has good version)
+Sync-TcmTestCase -Id "TC001" -Pull -Force  # Overwrite local
+
+# Commit whichever you chose
+git add TestCases/TC001-login.yaml .tcm-hashes.json
+git commit -m "Rolled back TC001 to previous version"
+```
+
+**Scenario: New team member onboarding**
+
+```powershell
+# 1. Clone repo
+git clone https://your-repo.git
+cd your-repo/TestCases
+
+# 2. Set up credentials (see PAT creation guide)
+$env:AZURE_DEVOPS_PAT = "new-team-member-pat"
+
+# 3. Initial sync from Azure DevOps
+Sync-TcmTestCase -Pull
+
+# Now ready to work!
+Get-TcmTestCase
+```
+
+### Integration with CI/CD
+
+**Automated validation in pipeline:**
+
+```yaml
+# Example: Azure Pipelines YAML
+steps:
+- task: PowerShell@2
+  displayName: 'Validate Test Cases'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Import-Module AzureDevOpsApi
+
+      # Check all YAML files are valid
+      Get-TcmTestCase | ForEach-Object {
+        if (-not $_.LocalData) {
+          Write-Error "Invalid YAML: $($_.FilePath)"
+          exit 1
+        }
+      }
+
+      Write-Host "✅ All test cases are valid"
+
+- task: PowerShell@2
+  displayName: 'Sync to Azure DevOps'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  env:
+    AZURE_DEVOPS_PAT: $(AzureDevOpsPAT)  # Secure variable
+  inputs:
+    targetType: 'inline'
+    script: |
+      Import-Module AzureDevOpsApi
+      Sync-TcmTestCase -Push -Verbose
+```
+
+### Best Practices Summary
+
+✅ **DO:**
+- Commit `.tcm-hashes.json` to enable team conflict detection
+- Sync to Azure DevOps before committing to Git
+- Pull from Git and Azure DevOps before starting work
+- Use feature branches for major test case additions
+- Document your test case changes in commit messages
+
+❌ **DON'T:**
+- Commit without syncing to Azure DevOps (creates drift)
+- Manually edit `.tcm-hashes.json` (auto-generated file)
+- Use `-Force` without understanding what you're overwriting
+- Ignore Git merge conflicts in YAML files
+- Share PAT tokens between team members
 
 ## Troubleshooting
 
+For detailed troubleshooting help, see **[Troubleshooting Guide](./troubleshooting.md)**.
+
+**Quick Diagnostics:**
+
+```powershell
+# Check PAT token
+$env:AZURE_DEVOPS_PAT
+
+# Verify config exists
+Test-Path .\.tcm-config.yaml
+
+# Enable verbose output
+$VerbosePreference = 'Continue'
+Get-TcmTestCase -Verbose
+```
+
 **Common Issues:**
 
-- PAT permissions insufficient for work item operations
-- YAML syntax errors preventing sync
-- Path separators in area/iteration paths
-- Environment variable not set for PAT
+- **401 Unauthorized**: PAT token missing or expired → Check `$env:AZURE_DEVOPS_PAT`
+- **403 Forbidden**: PAT lacks "Work Items: Read & write" permission
+- **Config not found**: No `.tcm-config.yaml` in current or parent directories
+- **Invalid YAML**: Indentation errors (must use 2 spaces) or unquoted special characters
+- **Sync conflicts**: Both local and remote changed → Use `-Force` with `-Push` or `-Pull`
+- **Slow performance**: Syncing 1000+ test cases → Sync by folder or only changed files
 
-**Debugging:**
-
-- Use `-Verbose` parameter on sync cmdlets
-- Check Azure DevOps work item permissions
-- Validate YAML with online parsers
-- Review sync logs for detailed error information
+See the [full troubleshooting guide](./troubleshooting.md) for detailed solutions and debugging steps.
 
 ## Related Documentation
 
+- [TestCaseManagement Overview](../../test_case_management.md) - Quick reference guide
 - [Function Reference](../../functions/AzureDevOpsApi.md) - Complete cmdlet documentation
 - [Azure DevOps REST API](https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items) - Work item API reference

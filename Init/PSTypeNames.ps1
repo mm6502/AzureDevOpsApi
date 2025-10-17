@@ -16,7 +16,8 @@ $global:PSTypeNames = [PSCustomObject] @{
         ApiWitPatchDocument          = 'PSTypeNames.AzureDevOpsApi.ApiWitPatchDocument'
 
         # Test Case Management
-        TcmTestCaseFileInput  = 'PSTypeNames.AzureDevOpsApi.TcmTestCaseFileInput'
-        TcmTestCase           = 'PSTypeNames.AzureDevOpsApi.TcmTestCase'
+        TcmTestCaseInput      = 'PSTypeNames.AzureDevOpsApi.TcmTestCaseInput'
+        TcmTestCaseLocalData  = 'PSTypeNames.AzureDevOpsApi.TcmTestCaseLocalData'
+        TcmTestCaseExtended   = 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended'
     }
 }

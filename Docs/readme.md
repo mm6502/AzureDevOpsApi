@@ -25,6 +25,18 @@ relationships within Azure DevOps. You can create, update, and query work items,
 as well as manage their links to other work items, such as parent-child relationships.
 Read more in [methodology](./methodology/work-methodology.md).
 
+## Test Case Management
+
+The TestCaseManagement module provides a git-like workflow for managing Azure DevOps
+test cases through local YAML files with seamless synchronization. Features include:
+
+- **Hybrid loading** - Local-first approach with fallback to Azure DevOps API
+- **Git-style operations** - Familiar `-Push`, `-Pull`, and `-Force` commands
+- **3-way merge** - Intelligent conflict detection using hash cache
+- **Bidirectional sync** - Keep local YAML files and remote work items in sync
+
+Read more in [TestCaseManagement Overview](test_case_management.md).
+
 ## Examples
 
 Comprehensive examples demonstrating common use cases are available in the [examples](./examples/readme.md):
@@ -33,3 +45,4 @@ Comprehensive examples demonstrating common use cases are available in the [exam
 - **[Credentials Management](./examples/credentials/01-multiple-credentials.md)** - Working with multiple Azure DevOps instances
 - **[Release Notes Generation](./examples/release-notes/)** - Automating release documentation
 - **[Work Items and Relationships](./examples/work-items/readme.md)** - Understanding work item patterns
+- **[Test Case Management](./examples/test-case-management/)** - Git-like workflow for test cases with YAML files

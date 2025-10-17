@@ -1,4 +1,4 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
@@ -13,7 +13,7 @@ Resolves synchronization conflicts for test cases.
 ## SYNTAX
 
 ```
-Resolve-TcmTestCaseConflict [-Id] <String> [-Strategy] <String> [[-TestCasesRoot] <String>]
+Resolve-TcmTestCaseConflict [-InputObject] <Object> [-Strategy] <String> [[-TestCasesRoot] <String>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -57,14 +57,15 @@ Interactively resolves conflicts for multiple test cases.
 
 ## PARAMETERS
 
-### -Id
-The local identifier of the test case with the conflict (e.g., "TC001").
+### -InputObject
+The local test case to resolve conflict for. Accepts:
+- Test case ID (string) - e.g., "TC001"
 Accepts pipeline input by value or property name.
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
-Aliases:
+Aliases: Id, TestCaseId, WorkItemId
 
 Required: True
 Position: 1
@@ -174,5 +175,5 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 [Sync-TcmTestCase]()
 
-[Get-TcmTestCaseSyncStatus]()
+[Resolve-TcmTestCaseSyncStatus]()
 

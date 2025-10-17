@@ -13,7 +13,7 @@ Converts set of ReleaseNotesDataItems to ExportData.
 ## SYNTAX
 
 ```
-Export-Excel [-ExportData] <Object> [-Path <Object>] [-TimeZone <String>] [-UseConstantFileName] [-Show]
+Export-Excel [-ExportData] <Object> [-Path <Object>] [-TimeZone <Object>] [-UseConstantFileName] [-Show]
  [-PassThru] [-ProgressPreference <ActionPreference>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -139,7 +139,7 @@ Windows style zone ids, f.e.
 Default value is "Central Europe Standard Time".
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 

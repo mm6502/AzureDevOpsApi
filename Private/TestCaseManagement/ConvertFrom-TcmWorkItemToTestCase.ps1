@@ -36,8 +36,22 @@ function ConvertFrom-TcmWorkItemToTestCase {
 
                     # CDATA sections use '#cdata-section' property, not '#text'
                     # Portal-edited steps use '#text' with HTML entities, API-created steps use '#cdata-section'
-                    $actionRaw = ($step.parameterizedString[0].'#cdata-section' ?? $step.parameterizedString[0].'#text' ?? '')
-                    $expectedResultRaw = ($step.parameterizedString[1].'#cdata-section' ?? $step.parameterizedString[1].'#text' ?? '')
+                    # PS5 compatible: use if/else instead of ?? operator
+                    if ($step.parameterizedString[0].'#cdata-section') {
+                        $actionRaw = $step.parameterizedString[0].'#cdata-section'
+                    } elseif ($step.parameterizedString[0].'#text') {
+                        $actionRaw = $step.parameterizedString[0].'#text'
+                    } else {
+                        $actionRaw = ''
+                    }
+
+                    if ($step.parameterizedString[1].'#cdata-section') {
+                        $expectedResultRaw = $step.parameterizedString[1].'#cdata-section'
+                    } elseif ($step.parameterizedString[1].'#text') {
+                        $expectedResultRaw = $step.parameterizedString[1].'#text'
+                    } else {
+                        $expectedResultRaw = ''
+                    }
 
                     # Strip HTML tags from the content (portal adds <DIV>, <P> tags)
                     $orderedStep['action'] = ($actionRaw -replace '<[^>]+>', '').Trim()
@@ -67,13 +81,15 @@ function ConvertFrom-TcmWorkItemToTestCase {
             areaPath = $fields.'System.AreaPath'
             iterationPath = $fields.'System.IterationPath'
             state = $fields.'System.State'
-            priority = [int]($fields.'Microsoft.VSTS.Common.Priority' ?? 2)
-            assignedTo = $fields.'System.AssignedTo'.displayName ?? ""
-            tags = ($fields.'System.Tags' -split ';' | Where-Object { $_ }) ?? @()
-            description = $fields.'System.Description' ?? ""
-            preconditions = $fields.'Microsoft.VSTS.TCM.LocalDataSource' ?? ""
+            # PS5 compatible: use if/else instead of ?? operator
+            # Note: Extract values first, then build hashtable (PS5 doesn't support if expressions in hashtable literals)
+            priority = [int]$(if ($fields.'Microsoft.VSTS.Common.Priority') { $fields.'Microsoft.VSTS.Common.Priority' } else { 2 })
+            assignedTo = $(if ($fields.'System.AssignedTo'.displayName) { $fields.'System.AssignedTo'.displayName } else { "" })
+            tags = $(if ($fields.'System.Tags') { ($fields.'System.Tags' -split ';' | Where-Object { $_ }) } else { @() })
+            description = $(if ($fields.'System.Description') { $fields.'System.Description' } else { "" })
+            preconditions = $(if ($fields.'Microsoft.VSTS.TCM.LocalDataSource') { $fields.'Microsoft.VSTS.TCM.LocalDataSource' } else { "" })
             steps = $steps
-            automationStatus = $fields.'Microsoft.VSTS.TCM.AutomationStatus' ?? "Not Automated"
+            automationStatus = $(if ($fields.'Microsoft.VSTS.TCM.AutomationStatus') { $fields.'Microsoft.VSTS.TCM.AutomationStatus' } else { "Not Automated" })
             customFields = @{}
         }
 

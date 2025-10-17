@@ -65,7 +65,9 @@ function Get-TcmStringHash {
             if ($kLower -match 'id' -and $kLower -eq 'id') { continue }
             # Keep common deterministic properties
             if ($kLower -in @('path','filename','name','url','uri','relativepath')) {
-                $result[$k] = ($att[$k] -as [string])?.Trim()
+                # PS5 compatible: use -as [string] and check before calling Trim()
+                $value = $att[$k] -as [string]
+                $result[$k] = if ($value) { $value.Trim() } else { $null }
             }
         }
         return $result

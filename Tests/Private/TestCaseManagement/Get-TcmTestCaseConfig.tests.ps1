@@ -16,16 +16,17 @@ Describe 'Get-TcmTestCaseConfig' {
 
         It 'Should return config when file exists' {
             # Arrange
+            $testRoot = Join-Path -Path $TestDrive -ChildPath 'temp'
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true }
-            Mock -ModuleName $ModuleName -CommandName Get-Content -MockWith { "testCasesRoot: 'C:\\temp'" }
-            Mock -ModuleName $ModuleName -CommandName ConvertFrom-Yaml -MockWith { @{ testCasesRoot = 'C:\temp' } }
+            Mock -ModuleName $ModuleName -CommandName Get-Content -MockWith { "testCasesRoot: '$testRoot'" }
+            Mock -ModuleName $ModuleName -CommandName ConvertFrom-Yaml -MockWith { @{ testCasesRoot = $testRoot } }
 
             # Act
-            $result = Get-TcmTestCaseConfig -TestCasesRoot 'C:\temp'
+            $result = Get-TcmTestCaseConfig -TestCasesRoot $testRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
-            $result.testCasesRoot | Should -Be 'C:\temp'
+            $result.testCasesRoot | Should -Be $testRoot
         }
     }
 }

@@ -1,117 +1,115 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
 schema: 2.0.0
 ---
 
-# Sync-TcmTestCase
+# Submit-PullRequests
 
 ## SYNOPSIS
-Synchronizes test cases between local YAML files and Azure DevOps.
+Submits pull requests for the specified repositories and branches.
 
 ## SYNTAX
 
 ```
-Sync-TcmTestCase [[-InputObject] <Object>] [[-Direction] <String>] [[-TestCasesRoot] <String>]
- [[-ConflictResolution] <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Submit-PullRequests [[-Project] <Object>] [[-CollectionUri] <Object>] [[-IncludeRepository] <Object>]
+ [[-ExcludeRepository] <Object>] [-SourceBranch] <Object> [-TargetBranch] <Object> [-AutoComplete] [-PassThru]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Synchronizes test case data between local YAML files and Azure DevOps work items.
-Supports bidirectional synchronization, push-only, and pull-only operations.
-Automatically detects sync status and handles conflicts based on the specified resolution strategy.
-
-The function compares content hashes to determine if local and remote versions differ,
-and performs the appropriate sync operation based on the direction and conflict resolution settings.
+The Submit-PullRequests function submits pull requests for the specified repositories and branches.
+It gets a list of repositories, filters them, and creates a pull request for each one if needed.
 
 ## EXAMPLES
 
-### EXAMPLE 1
-```
-Sync-TcmTestCase -InputObject "TC001"
-```
-
-Synchronizes test case TC001 bidirectionally using default settings.
-
-### EXAMPLE 2
-```
-Get-TcmTestCase -Id "TC*" | Sync-TcmTestCase -Direction ToRemote
+### Example 1
+```powershell
+PS C:\> {{ Add example code here }}
 ```
 
-Gets all test cases matching "TC*" and pushes them to Azure DevOps.
-
-### EXAMPLE 3
-```
-Sync-TcmTestCase -InputObject "authentication/TC001-login.yaml" -Direction FromRemote -ConflictResolution RemoteWins
-```
-
-Pulls the latest version from Azure DevOps for the specified file, using remote version in case of conflicts.
-
-### EXAMPLE 4
-```
-Sync-TcmTestCase -WhatIf
-```
-
-Shows what sync operations would be performed without making any changes.
+{{ Add example description here }}
 
 ## PARAMETERS
 
-### -ConflictResolution
-How to handle conflicts when both local and remote versions have changes:
-- Manual: Stop and require manual resolution (default)
-- LocalWins: Use local version, overwrite remote
-- RemoteWins: Use remote version, overwrite local
-- LatestWins: Use the version with the most recent modification date
+### -AutoComplete
+Whether the pull request should be autocompleted.
 
 ```yaml
-Type: String
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 4
-Default value: Manual
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Direction
-Direction of synchronization:
-- Bidirectional: Push local changes and pull remote changes (default)
-- ToRemote: Only push local changes to Azure DevOps
-- FromRemote: Only pull changes from Azure DevOps
+### -CollectionUri
+Url for project collection on Azure DevOps server instance.
+If not specified, $global:AzureDevOpsApi_CollectionUri (set by Set-AzureDevopsVariables) is used.
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: 2
-Default value: Bidirectional
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InputObject
-The local test case to synchronize.
-Accepts:
-- Test case ID (string) - e.g., "TC001"
-- File path (string) - relative or absolute path to YAML file
-- Test case object (hashtable) - from Get-TcmTestCase
-Accepts pipeline input by value or property name.
+### -ExcludeRepository
+Names or masks of the git repositories to NOT make the pullrequests for.
 
 ```yaml
 Type: Object
 Parameter Sets: (All)
-Aliases: Path, Id, TestCaseId, WorkItemId
+Aliases: Exclude
 
 Required: False
-Position: 1
-Default value: None
-Accept pipeline input: True (ByPropertyName, ByValue)
+Position: 4
+Default value: @()
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeRepository
+Names or masks of the git repositories to make the pullrequests for.
+
+```yaml
+Type: Object
+Parameter Sets: (All)
+Aliases: Include
+
+Required: False
+Position: 3
+Default value: @('*')
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Specifies whether the function should return objects to the pipeline.
+When you use the -PassThru switch, the function returns an object
+that you can work with further.
+Without -PassThru, the function may execute silently
+without returning any data.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -130,47 +128,49 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TestCasesRoot
-Root directory containing test case YAML files.
-If not specified, uses the current directory or searches parent directories for .tcm-config.yaml.
+### -Project
+Project to get.
+Can be passed as a name, identifier, full project URI, or object with any one
+these properties.
+If not specified, $global:AzureDevOpsApi_Project (set by Set-AzureDevopsVariables) is used.
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 3
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -SourceBranch
+Name of the base branch.
 
 ```yaml
-Type: SwitchParameter
+Type: Object
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
-Required: False
-Position: Named
+Required: True
+Position: 5
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs without actually performing the sync operations.
+### -TargetBranch
+Name of the target branch.
 
 ```yaml
-Type: SwitchParameter
+Type: Object
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
-Required: False
-Position: Named
+Required: True
+Position: 6
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -181,24 +181,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
-### System.Collections.Hashtable
-### Accepts test case IDs, file paths, or test case objects from the pipeline.
 ## OUTPUTS
 
-### None. The function displays progress and results to the console.
 ## NOTES
-- Requires a valid .tcm-config.yaml configuration file.
-- Azure DevOps credentials must be configured for the target collection and project.
-- Sync operations are atomic per test case to prevent partial updates.
-- Use -WhatIf to preview changes before executing.
-- Conflict resolution strategies only apply when both versions have changes.
 
 ## RELATED LINKS
-
-[Get-TcmTestCase]()
-
-[Resolve-TcmTestCaseConflict]()
-
-[New-TcmConfig]()
-

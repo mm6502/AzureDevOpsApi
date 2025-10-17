@@ -1,4 +1,4 @@
----
+﻿---
 external help file: AzureDevOpsApi-help.xml
 Module Name: AzureDevOpsApi
 online version:
@@ -14,7 +14,7 @@ Converts set of ReleaseNotesDataItems to MarkDown.
 
 ```
 Export-MarkDown [-ExportData] <Object> [-Path <Object>] [-TesterWorkItemTypes <Object>]
- [-ManagementWorkItemTypes <Object>] [-TimeZone <String>] [-Environment <Object>] [-UseConstantFileName]
+ [-ManagementWorkItemTypes <Object>] [-TimeZone <Object>] [-Environment <Object>] [-UseConstantFileName]
  [-PassThru] [-ProgressPreference <ActionPreference>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -159,7 +159,7 @@ Accept wildcard characters: False
 {{ Fill TimeZone Description }}
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 

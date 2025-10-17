@@ -4,7 +4,7 @@ function Sync-TcmTestCaseToRemote {
             Pushes a local test case to Azure DevOps.
 
         .PARAMETER InputObject
-            The test case to push. Can be a test case ID (string), file path (string), or resolved object from Resolve-TcmTestCaseFilePathInput.
+            The resolved test case object from ConvertTo-TcmTestCaseInput with PSTypeName 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended'.
 
         .PARAMETER TestCasesRoot
             Root directory for test cases. If not specified, uses the default TestCases directory.
@@ -13,27 +13,33 @@ function Sync-TcmTestCaseToRemote {
             Force push even if there are remote changes (overwrite remote).
 
         .EXAMPLE
-            Sync-TcmTestCaseToRemote -InputObject "TC001"
+            "TC001" | ConvertTo-TcmTestCaseInput | Sync-TcmTestCaseToRemote
 
         .EXAMPLE
-            Sync-TcmTestCaseToRemote -InputObject "TestCases/area/TC001.yaml"
+            "TestCases/area/TC001.yaml" | ConvertTo-TcmTestCaseInput | Sync-TcmTestCaseToRemote
 
         .EXAMPLE
-            Get-ChildItem "TestCases/*.yaml" | Resolve-TcmTestCaseFilePathInput | Sync-TcmTestCaseToRemote
+            Get-ChildItem "TestCases/*.yaml" | ConvertTo-TcmTestCaseInput | Sync-TcmTestCaseToRemote
 
         .EXAMPLE
-            Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
+            "TC001" | ConvertTo-TcmTestCaseInput | Sync-TcmTestCaseToRemote -Force
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [Alias("Path", "FilePath", "Id", "TestCaseId", "WorkItemId")]
+        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [ValidateScript({ $_.PSTypeNames -contains $global:PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended })]
         $InputObject,
 
         [string] $TestCasesRoot,
 
-        [switch] $Force
+        [switch] $Force,
+
+        [string] $Message,
+
+        [string] $MessageColor = 'Cyan',
+
+        [string] $ShouldProcessOperation = "Push to Azure DevOps"
     )
 
     begin {
@@ -52,103 +58,70 @@ function Sync-TcmTestCaseToRemote {
     }
 
     process {
-        # Resolve input to get consistent format
-        $resolved = $InputObject | Resolve-TcmTestCaseFilePathInput
-        if (-not $resolved -or -not $resolved.Id) {
-            throw "Invalid input: Could not resolve test case from input '$InputObject'"
+        # Validate input: function expects already-resolved test case input (LocalData present)
+        if (-not $InputObject -or -not $InputObject.LocalData) {
+            throw "Invalid input: InputObject must be a resolved TcmTestCaseExtended with LocalData populated"
         }
 
-        $Id = $resolved.Id
+        $testCaseData = $InputObject.LocalData
+        $Id = if ($InputObject.Id) { $InputObject.Id } else { $testCaseData.id }
+        $localPath = $InputObject.FilePath
 
         try {
+            # Display message if provided
+            if ($Message) {
+                Write-Host "→ $Message" -ForegroundColor $MessageColor
+            }
+
             Write-Verbose "Pushing test case '$Id' to Azure DevOps..."
             Write-Verbose "CollectionUri: $collectionUri"
             Write-Verbose "Project: $project"
 
             # Get sync status
-            $syncStatus = Get-TcmTestCaseSyncStatus -Id $Id -Config $config
+            $resolved = Resolve-TcmTestCaseSyncStatus -InputObject $InputObject -Config $config
+            $syncStatus = $resolved.SyncStatus
 
             # Check for conflicts
-            if ($syncStatus -eq "conflict" -and -not $Force) {
+            if ($syncStatus -eq 'conflict' -and -not $Force) {
                 throw "Test case '$Id' has conflicts. Use -Force to overwrite remote or run Resolve-TcmTestCaseConflict first."
             }
 
-            if ($syncStatus -eq "synced" -and -not $Force) {
+            if ($syncStatus -eq 'synced' -and -not $Force) {
                 Write-Host "Test case '$Id' is already synced. No push needed." -ForegroundColor Green
                 return
             }
 
-            # Load local test case by scanning files
-            $localPath = $null
-
-            # First try: Search for file with this ID prefix in the filename (fast)
-            $pattern = "$Id-*.yaml"
-            $foundFiles = Get-ChildItem -Path $config.TestCasesRoot -Filter $pattern -Recurse -File
-
-            # Second try: If not found by filename and ID is not numeric, search file contents
-            if ($foundFiles.Count -eq 0 -and $Id -notmatch '^\d+$') {
-                Write-Verbose "Searching for test case '$Id' by scanning YAML file contents..."
-                $allYamlFiles = Get-ChildItem -Path $config.TestCasesRoot -Filter "*.yaml" -Recurse -File
-
-                foreach ($file in $allYamlFiles) {
-                    try {
-                        $content = Get-TcmTestCaseFromFile -FilePath $file.FullName -IncludeMetadata -ErrorAction SilentlyContinue
-                        if ($content.testCase.id -eq $Id) {
-                            $foundFiles = @($file)
-                            Write-Verbose "Found test case '$Id' in file: $($file.FullName)"
-                            break
-                        }
-                    } catch {
-                        # Skip files that can't be parsed
-                        continue
-                    }
-                }
-            }
-
-            if ($foundFiles.Count -eq 0) {
-                throw "Test case '$Id' not found. Searched by filename pattern '$pattern' and file contents. Ensure the test case YAML file exists and has 'testCase.id: $Id' set."
-            } elseif ($foundFiles.Count -gt 1) {
-                throw "Multiple files found matching test case ID '$Id'. Please ensure unique IDs."
-            }
-
-            $localPath = $foundFiles[0].FullName
-            Write-Verbose "Found local file for test case '$Id': $localPath"
-
-            if (-not (Test-Path $localPath)) {
-                throw "Local test case file not found: $localPath"
-            }
-
-            $testCaseData = Get-TcmTestCaseFromFile -FilePath $localPath -IncludeMetadata
-
             # Convert test steps to Azure DevOps XML format
-            $stepsXml = ConvertTo-TestStepsXml -Steps $testCaseData.testCase.steps
+            $stepsXml = ConvertTo-TestStepsXml -Steps $testCaseData.steps
 
-            # Prepare work item fields (title and id now live under testCase)
+            # Prepare work item fields (LocalData contains the test case structure)
             $fields = @{
-                'System.Title'                        = $testCaseData.testCase.title
-                'System.AreaPath'                     = $testCaseData.testCase.areaPath
-                'System.IterationPath'                = $testCaseData.testCase.iterationPath
-                'System.State'                        = $testCaseData.testCase.state
-                'Microsoft.VSTS.Common.Priority'      = $testCaseData.testCase.priority
-                'System.Description'                  = $testCaseData.testCase.description
-                'Microsoft.VSTS.TCM.LocalDataSource'  = $testCaseData.testCase.preconditions
+                'System.Title'                        = $testCaseData.title
+                'System.AreaPath'                     = $testCaseData.areaPath
+                'System.IterationPath'                = $testCaseData.iterationPath
+                'System.State'                        = $testCaseData.state
+                'Microsoft.VSTS.Common.Priority'      = $testCaseData.priority
+                'System.Description'                  = $testCaseData.description
+                'Microsoft.VSTS.TCM.LocalDataSource'  = $testCaseData.preconditions
                 'Microsoft.VSTS.TCM.Steps'            = $stepsXml
-                'Microsoft.VSTS.TCM.AutomationStatus' = $testCaseData.testCase.automationStatus
+                'Microsoft.VSTS.TCM.AutomationStatus' = $testCaseData.automationStatus
             }
 
             # Add tags if present
-            if ($testCaseData.testCase.tags -and $testCaseData.testCase.tags.Count -gt 0) {
-                $fields['System.Tags'] = $testCaseData.testCase.tags -join ';'
+            if ($testCaseData.tags -and $testCaseData.tags.Count -gt 0) {
+                $fields['System.Tags'] = $testCaseData.tags -join ';'
             }
 
             # Add assigned to if present
-            if ($testCaseData.testCase.assignedTo) {
-                $fields['System.AssignedTo'] = $testCaseData.testCase.assignedTo
+            if ($testCaseData.assignedTo) {
+                $fields['System.AssignedTo'] = $testCaseData.assignedTo
             }
 
             # Add custom fields
-            foreach ($key in $testCaseData.testCase.customFields.Keys) {
-                $fields[$key] = $testCaseData.testCase.customFields[$key]
+            if ($testCaseData.customFields) {
+                foreach ($key in $testCaseData.customFields.Keys) {
+                    $fields[$key] = $testCaseData.customFields[$key]
+                }
             }
 
             # Create or update work item
@@ -157,7 +130,11 @@ function Sync-TcmTestCaseToRemote {
             if ($Id -match '^\d+$') {
                 # Try to fetch existing work item (ID is numeric, so it might be a Work Item ID)
                 try {
-                    $remoteWorkItem = Get-WorkItem -WorkItem $Id -CollectionUri $collectionUri -Project $project -ErrorAction Stop
+                    $remoteWorkItem = Get-WorkItem `
+                        -WorkItem $Id `
+                        -CollectionUri $collectionUri `
+                        -Project $project `
+                        -ErrorAction Stop
                 } catch {
                     # Work item doesn't exist - will create it below
                     Write-Verbose "Work item $Id not found, will create new work item"
@@ -167,7 +144,7 @@ function Sync-TcmTestCaseToRemote {
 
             if ($remoteWorkItem) {
                 # Update existing work item
-                if ($PSCmdlet.ShouldProcess("Work Item $Id", "Update test case")) {
+                if ($PSCmdlet.ShouldProcess("Test case '$Id'", $ShouldProcessOperation)) {
 
                     # Create a minimal patch document for update (avoid copying source field objects)
                     $workItemType = $remoteWorkItem.fields.'System.WorkItemType'
@@ -189,10 +166,17 @@ function Sync-TcmTestCaseToRemote {
                     $workItem = $patchDoc | Update-WorkItem -ErrorAction Stop
 
                     Write-Host "Updated test case '$Id' in Azure DevOps (Work Item: $Id)" -ForegroundColor Green
+
+                    # Update cache: after push, local and remote should match
+                    $localHash = Get-TcmStringHash -InputObject $InputObject.LocalData
+                    Update-TcmHashCacheEntry `
+                        -TestCasesRoot $config.TestCasesRoot `
+                        -TestCaseId $workItem.id `
+                        -Hash $localHash
                 }
             } else {
                 # Create new work item (ID is not found remotely or not numeric)
-                if ($PSCmdlet.ShouldProcess($project, "Create new test case")) {
+                if ($PSCmdlet.ShouldProcess("Test case '$Id'", $ShouldProcessOperation)) {
                     Write-Verbose "Creating new work item with CollectionUri='$collectionUri' and Project='$project'"
 
                     # Build patch document for creation
@@ -231,7 +215,7 @@ function Sync-TcmTestCaseToRemote {
 
                     # Build new filename prefixed with server id
                     $newWorkItemId = [int]$workItem.id
-                    $title = $fields.'System.Title' -replace '[^\w\s-]', '' -replace '\s+', '-'
+                    $title = $updatedTestCase.title -replace '[^\w\s-]', '' -replace '\s+', '-'
                     $newFileName = "$newWorkItemId-$title".ToLower() + ".yaml"
                     $newFullPath = Join-Path (Split-Path -Parent $localPath) $newFileName
 
@@ -240,7 +224,7 @@ function Sync-TcmTestCaseToRemote {
                         # Replace existing file by new content and rename without losing data on failure
                         $tmpPath = [System.IO.Path]::GetTempFileName()
                         try {
-                            Save-TcmTestCaseYaml -FilePath $tmpPath -Data $updatedData
+                            Save-TcmTestCaseYaml -FilePath $tmpPath -Data $updatedData -TestCasesRoot $config.TestCasesRoot
 
                             Move-Item -Path $localPath -Destination ($localPath + '.bak') -Force
                             Move-Item -Path $tmpPath -Destination $newFullPath -Force
@@ -256,10 +240,20 @@ function Sync-TcmTestCaseToRemote {
                         # File already has correct name, just update content
                         Save-TcmTestCaseYaml -FilePath $localPath -Data $updatedData
                     }
+
+                    # Update cache: after push, local and remote should match
+                    # Re-read from disk to get the actual file content hash
+                    $savedTestCase = Get-TcmTestCaseFromFile -FilePath $localPath
+                    $savedHash = Get-TcmStringHash -InputObject $savedTestCase
+                    Update-TcmHashCacheEntry `
+                        -TestCasesRoot $config.TestCasesRoot `
+                        -TestCaseId $workItem.id `
+                        -Hash $savedHash
                 }
             }
 
             Write-Verbose "Test case '$($workItem.id)' pushed successfully"
+
         } catch {
             Write-Error "Failed to push test case '$Id': $($_.Exception.Message)"
             throw

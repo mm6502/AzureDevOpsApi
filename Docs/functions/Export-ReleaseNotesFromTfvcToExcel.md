@@ -15,7 +15,7 @@ Runs compilation of release notes data from TFVC based project.
 ```
 Export-ReleaseNotesFromTfvcToExcel [[-CollectionUri] <Object>] [[-Project] <Object>] [[-DateFrom] <DateTime>]
  [[-DateTo] <DateTime>] [[-AsOf] <DateTime>] [[-ByUser] <Object>] [[-TrunkBranch] <Object>]
- [[-ReleaseBranch] <String>] [[-Path] <Object>] [[-TimeZone] <String>] [-Show] [-PassThru]
+ [[-ReleaseBranch] <String>] [[-Path] <Object>] [[-TimeZone] <Object>] [-Show] [-PassThru]
  [-UseConstantFileName] [[-ProgressPreference] <ActionPreference>] [[-TimePeriodWorkItemsFilter] <ScriptBlock>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
@@ -258,7 +258,7 @@ Windows style zone ids, f.e.
 Default value is "Central Europe Standard Time".
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 

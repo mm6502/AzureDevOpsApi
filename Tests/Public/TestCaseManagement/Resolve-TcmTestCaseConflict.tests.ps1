@@ -6,25 +6,66 @@ Describe 'Resolve-TcmTestCaseConflict' {
 
     BeforeAll {
 
+        # Helper function to create mock test case objects
+        function New-MockTestCaseObject {
+            param(
+                [string]$Id = '123',
+                [string]$SyncStatus = 'conflict',
+                [string]$LocalLastModified = '2024-01-15T09:00:00Z',
+                [string]$RemoteChangedDate = '2024-01-15T10:30:00Z',
+                [string]$FilePath = $null
+            )
+
+            if (-not $FilePath) {
+                $FilePath = Join-Path -Path $TestDrive -ChildPath "$Id.yaml"
+            }
+
+            $obj = [PSCustomObject]@{
+                Id = $Id
+                SyncStatus = $SyncStatus
+                FilePath = $FilePath
+                LocalData = @{
+                    id = $Id
+                    title = 'Test Case Title'
+                    state = 'Design'
+                    steps = @(@{ stepNumber = 1; action = 'Test action'; expectedResult = 'Expected' })
+                    history = @{
+                        lastModifiedAt = $LocalLastModified
+                        lastModifiedBy = 'Test User'
+                    }
+                }
+                RemoteData = @{
+                    id = $Id
+                    title = 'Test Case Title'
+                    state = 'Design'
+                    steps = @(@{ stepNumber = 1; action = 'Test action'; expectedResult = 'Expected' })
+                }
+                RemoteWorkItem = @{
+                    id = [int]$Id
+                    fields = @{
+                        'System.WorkItemType' = 'Test Case'
+                        'System.Title' = 'Test Case Title'
+                        'System.ChangedDate' = $RemoteChangedDate
+                        'System.ChangedBy' = @{ displayName = 'Test User' }
+                    }
+                }
+            }
+
+            $obj.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
+            return $obj
+        }
+
+        # Mock Get-TcmTestCase to return properly structured test case objects
+        Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
+            param($InputObject, $Id, $TestCasesRoot)
+            $testId = if ($InputObject) { $InputObject } elseif ($Id) { $Id } else { '123' }
+            New-MockTestCaseObject -Id $testId
+        }
+
         # Mock the sync functions that are called by Resolve-TcmTestCaseConflict
         Mock -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -MockWith { }
         Mock -ModuleName $ModuleName -CommandName Sync-TcmTestCaseFromRemote -MockWith { }
-        Mock -ModuleName $ModuleName -CommandName Get-WorkItem -MockWith {
-            @{
-                fields = @{
-                    'System.Title' = 'Test Case Title'
-                    'System.ChangedDate' = '2024-01-15T10:30:00Z'
-                    'System.ChangedBy' = @{ displayName = 'Test User' }
-                }
-            }
-        }
-        Mock -ModuleName $ModuleName -CommandName ConvertFrom-TcmWorkItemToTestCase -MockWith {
-            @{
-                title = 'Test Case Title'
-                state = 'Design'
-                steps = @(@{ stepNumber = 1; action = 'Test action' })
-            }
-        }
+        Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }
     }
 
     Context 'Parameter validation' {
@@ -55,13 +96,13 @@ testCase:
             Set-Content -Path $configPath -Value $configContent -Encoding UTF8
         }
 
-        It 'Should require Id parameter' {
+        It 'Should require InputObject parameter' {
             # This test is tricky because PowerShell prompts for mandatory parameters
             # Instead, we'll test that the function exists and has the right parameters
             $command = Get-Command Resolve-TcmTestCaseConflict
-            $idParam = $command.Parameters['Id']
-            $idParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | Should -Not -BeNullOrEmpty
-            $mandatoryAttribute = $idParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] -and $_.Mandatory }
+            $inputParam = $command.Parameters['InputObject']
+            $inputParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | Should -Not -BeNullOrEmpty
+            $mandatoryAttribute = $inputParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] -and $_.Mandatory }
             $mandatoryAttribute | Should -Not -BeNullOrEmpty
         }
 
@@ -117,8 +158,23 @@ testCase:
 
         It 'Should warn when test case does not have a conflict' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'synced'
+            $testFilePath = Join-Path -Path $TestDrive -ChildPath '123.yaml'
+            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
+                [PSCustomObject]@{
+                    Id = '123'
+                    SyncStatus = 'synced'
+                    LocalData = @{ id = '123'; title = 'Test' }
+                    RemoteData = @{ id = '123'; title = 'Test' }
+                    RemoteWorkItem = @{
+                        fields = @{
+                            'System.WorkItemType' = 'Test Case'
+                            'System.Title' = 'Test'
+                            'System.ChangedDate' = '2024-01-15T10:30:00Z'
+                            'System.ChangedBy' = @{ displayName = 'Test User' }
+                        }
+                    }
+                    FilePath = $testFilePath
+                }
             }
 
             # Act - Capture warning output
@@ -133,10 +189,9 @@ testCase:
 
         It 'Should throw when test case file is not found' {
             # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
+            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
+                throw "Work item 123 is not a Test Case (type: )"
             }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { @() }
 
             # Act & Assert - Suppress error output since we're testing error handling
             { Resolve-TcmTestCaseConflict -Id '123' -Strategy LocalWins -TestCasesRoot $testRoot -ErrorAction SilentlyContinue } | Should -Throw
@@ -187,16 +242,11 @@ history:
         }
 
         It 'Should call Sync-TcmTestCaseToRemote for LocalWins strategy' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
-            }
-            Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }  # Suppress display output
-
             # Act
             Resolve-TcmTestCaseConflict -Id '123' -Strategy LocalWins -TestCasesRoot $testRoot
 
             # Assert
+            # Resolve-TcmTestCaseSyncStatus is now called internally by Get-TcmTestCase
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -Times 1
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseFromRemote -Times 0
         }
@@ -246,16 +296,11 @@ history:
         }
 
         It 'Should call Sync-TcmTestCaseFromRemote for RemoteWins strategy' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
-            }
-            Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }  # Suppress display output
-
             # Act
             Resolve-TcmTestCaseConflict -Id '123' -Strategy RemoteWins -TestCasesRoot $testRoot
 
             # Assert
+            # Resolve-TcmTestCaseSyncStatus is now called internally by Get-TcmTestCase
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseFromRemote -Times 1
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -Times 0
         }
@@ -290,40 +335,24 @@ testCase:
         }
 
         It 'Should choose local when local is newer' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
+            # Arrange - Mock Get-TcmTestCase to return a test case where local is newer
+            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
+                New-MockTestCaseObject -SyncStatus 'conflict' -LocalLastModified '2024-01-16T10:30:00Z' -RemoteChangedDate '2024-01-15T10:30:00Z'
             }
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseFromFile -MockWith {
-                @{
-                    testCase = @{ id = '123' }
-                    history = @{ lastModifiedAt = '2024-01-16T10:30:00Z' } # Newer than remote
-                }
-            }
-            Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }  # Suppress display output
-
-            # Create a test case file
-            $testCasePath = Join-Path -Path $testRoot -ChildPath 'TC001-test-case.yaml'
-            Set-Content -Path $testCasePath -Value 'dummy' -Encoding UTF8
 
             # Act
             Resolve-TcmTestCaseConflict -Id '123' -Strategy LatestWins -TestCasesRoot $testRoot
 
             # Assert
+            # Resolve-TcmTestCaseSyncStatus is now called internally by Get-TcmTestCase
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -Times 1
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseFromRemote -Times 0
         }
 
         It 'Should choose remote when remote is newer' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
-            }
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseFromFile -MockWith {
-                @{
-                    testCase = @{ id = '123' }
-                    history = @{ lastModifiedAt = '2024-01-14T10:30:00Z' } # Older than remote
-                }
+            # Arrange - Mock Get-TcmTestCase to return a test case where remote is newer
+            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
+                New-MockTestCaseObject -SyncStatus 'conflict' -LocalLastModified '2024-01-14T10:30:00Z' -RemoteChangedDate '2024-01-15T10:30:00Z'
             }
             Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }  # Suppress display output
 
@@ -334,7 +363,7 @@ testCase:
             # Act
             Resolve-TcmTestCaseConflict -Id '123' -Strategy LatestWins -TestCasesRoot $testRoot
 
-            # Assert
+            # Assert - Remote is newer, so we should sync FROM remote
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseFromRemote -Times 1
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -Times 0
         }
@@ -384,16 +413,11 @@ history:
         }
 
         It 'Should display conflict information for Manual strategy' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
-            }
-            Mock -ModuleName $ModuleName -CommandName Write-Host -MockWith { }  # Suppress display output
-
             # Act - Manual strategy should not call sync functions, just display info
             Resolve-TcmTestCaseConflict -Id '123' -Strategy Manual -TestCasesRoot $testRoot
 
             # Assert - Verify no sync was attempted (Manual just shows info)
+            # Resolve-TcmTestCaseSyncStatus is now called internally by Get-TcmTestCase
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -Times 0
             Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseFromRemote -Times 0
             # Verify Write-Host was called to display conflict info
@@ -430,14 +454,11 @@ testCase:
         }
 
         It 'Should accept pipeline input' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
-                'conflict'
-            }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { @() } # Prevent file finding
-
-            # Act & Assert - Suppress error output since we're testing error handling
-            { '123' | Resolve-TcmTestCaseConflict -Strategy LocalWins -TestCasesRoot $testRoot -ErrorAction SilentlyContinue } | Should -Throw
+            # Act & Assert
+            # Pipeline input should work with the mocked Get-TcmTestCase
+            { '123' | Resolve-TcmTestCaseConflict -Strategy LocalWins -TestCasesRoot $testRoot } | Should -Not -Throw
+            # Resolve-TcmTestCaseSyncStatus is now called internally by Get-TcmTestCase
+            Assert-MockCalled -ModuleName $ModuleName -CommandName Sync-TcmTestCaseToRemote -Times 1
         }
     }
 
@@ -470,8 +491,8 @@ testCase:
         }
 
         It 'Should handle errors during conflict resolution' {
-            # Arrange
-            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseSyncStatus -MockWith {
+            # Arrange - Mock Get-TcmTestCase to throw an error
+            Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
                 throw "Test error"
             }
 

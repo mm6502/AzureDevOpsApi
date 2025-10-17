@@ -10,8 +10,9 @@ function Resolve-TcmTestCaseConflict {
             Conflicts occur when content has changed in both the local YAML file and the Azure DevOps work item
             since the last synchronization. This function helps choose which version to keep or merge changes.
 
-        .PARAMETER Id
-            The local identifier of the test case with the conflict (e.g., "TC001").
+        .PARAMETER InputObject
+            The local test case to resolve conflict for. Accepts:
+            - Test case ID (string) - e.g., "TC001"
             Accepts pipeline input by value or property name.
 
         .PARAMETER Strategy
@@ -62,13 +63,14 @@ function Resolve-TcmTestCaseConflict {
             Sync-TcmTestCase
 
         .LINK
-            Get-TcmTestCaseSyncStatus
+            Resolve-TcmTestCaseSyncStatus
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [string] $Id,
+        [Alias("Id", "TestCaseId", "WorkItemId")]
+        $InputObject,
 
         [Parameter(Mandatory)]
         [ValidateSet('Manual', 'LocalWins', 'RemoteWins', 'LatestWins')]
@@ -80,122 +82,124 @@ function Resolve-TcmTestCaseConflict {
     begin {
         # Get configuration
         $config = Get-TcmTestCaseConfig -TestCasesRoot $TestCasesRoot
+
+        $inputItems = @()
     }
 
     process {
-        try {
-            Write-Verbose "Resolving conflict for test case '$Id' using strategy: $Strategy"
+        $inputItems += $InputObject
+    }
 
-            # Verify there's actually a conflict
-            $syncStatus = Get-TcmTestCaseSyncStatus -Id $Id -Config $config
+    end {
+        # PS5 compatible: don't start new line with pipe
+        $inputItems | Get-TcmTestCase -TestCasesRoot $config.TestCasesRoot | ForEach-Object {
 
-            if ($syncStatus -ne 'conflict') {
-                Write-Warning "Test case '$Id' does not have a conflict (status: $syncStatus)"
-                return
-            }
+            $resolved = $_
+            $testCaseId = $resolved.Id
 
-            # Find local file by scanning
-            $localPath = $null
-            $yamlFiles = Get-ChildItem -Path $config.TestCasesRoot -Include "*.yaml" -Recurse -File
+            try {
+                Write-Verbose "Resolving conflict for test case '$testCaseId' using strategy: $Strategy"
 
-            foreach ($file in $yamlFiles) {
-                try {
-                    $fileData = Get-TcmTestCaseFromFile -FilePath $file.FullName -IncludeMetadata -ErrorAction SilentlyContinue
-                    if ($fileData.testCase.id -eq $Id) {
-                        $localPath = $file.FullName
-                        $localData = $fileData
-                        break
-                    }
-                } catch {
-                    # Skip files that can't be parsed
-                    continue
-                }
-            }
+                # Check if there's actually a conflict (already determined by Get-TcmTestCase)
+                $syncStatus = $resolved.SyncStatus
 
-            if (-not $localPath) {
-                throw "Test case with ID '$Id' not found in any local YAML file"
-            }
-
-            # The $Id is the Work Item ID
-            $collection = $null
-            $project = $null
-            if ($config.azureDevOps) {
-                $collection = $config.azureDevOps.collectionUri
-                $project = $config.azureDevOps.project
-            }
-            $workItem = Get-WorkItem -WorkItem $Id -CollectionUri $collection -Project $project
-            $remoteData = ConvertFrom-TcmWorkItemToTestCase -WorkItem $workItem
-
-            switch ($Strategy) {
-                'LocalWins' {
-                    if ($PSCmdlet.ShouldProcess("Test case '$Id'", "Resolve conflict - keep local changes")) {
-                        Write-Host "Resolving conflict for '$Id': Local version wins" -ForegroundColor Yellow
-                        Sync-TcmTestCaseToRemote -Id $Id -TestCasesRoot $config.TestCasesRoot -Force
-                        Write-Host "✓ Conflict resolved: Local changes pushed to Azure DevOps" -ForegroundColor Green
-                    }
+                if ($syncStatus -ne 'conflict') {
+                    Write-Warning "Test case '$testCaseId' does not have a conflict (status: $syncStatus)"
+                    return
                 }
 
-                'RemoteWins' {
-                    if ($PSCmdlet.ShouldProcess("Test case '$Id'", "Resolve conflict - keep remote changes")) {
-                        Write-Host "Resolving conflict for '$Id': Remote version wins" -ForegroundColor Yellow
-                        Sync-TcmTestCaseFromRemote -Id $Id -TestCasesRoot $config.TestCasesRoot -Force
-                        Write-Host "✓ Conflict resolved: Remote changes pulled from Azure DevOps" -ForegroundColor Green
+                # Get local and remote data from resolved object
+                $localData = $resolved.LocalData
+                $localPath = $resolved.FilePath
+                $remoteData = $resolved.RemoteData
+                $remoteWorkItem = $resolved.RemoteWorkItem
+
+                switch ($Strategy) {
+                    'LocalWins' {
+                        Sync-TcmTestCaseToRemote `
+                            -InputObject $resolved `
+                            -TestCasesRoot $config.TestCasesRoot `
+                            -Force `
+                            -Message "Resolving conflict for '$testCaseId': Local version wins" `
+                            -MessageColor 'Yellow' `
+                            -ShouldProcessOperation "Resolve conflict - keep local changes"
+
+                        Write-Host "[OK] Conflict resolved: Local changes pushed to Azure DevOps" -ForegroundColor Green
                     }
-                }
 
-                'LatestWins' {
-                    # Compare timestamps to determine which is newer
-                    $localTimestamp = [DateTime]::Parse($localData.history.lastModifiedAt)
-                    $remoteTimestamp = [DateTime]::Parse($workItem.fields.'System.ChangedDate')
+                    'RemoteWins' {
+                        Sync-TcmTestCaseFromRemote `
+                            -InputObject $resolved `
+                            -TestCasesRoot $config.TestCasesRoot `
+                            -Force `
+                            -Message "Resolving conflict for '$testCaseId': Remote version wins" `
+                            -MessageColor 'Yellow' `
+                            -ShouldProcessOperation "Resolve conflict - keep remote changes"
 
-                    if ($localTimestamp -gt $remoteTimestamp) {
-                        if ($PSCmdlet.ShouldProcess("Test case '$Id'", "Resolve conflict - local is newer")) {
-                            Write-Host "Resolving conflict for '$Id': Local version is newer" -ForegroundColor Yellow
-                            Sync-TcmTestCaseToRemote -Id $Id -TestCasesRoot $config.TestCasesRoot -Force
-                            Write-Host "✓ Conflict resolved: Newer local changes pushed to Azure DevOps" -ForegroundColor Green
+                        Write-Host "[OK] Conflict resolved: Remote changes pulled from Azure DevOps" -ForegroundColor Green
+                    }
+
+                    'LatestWins' {
+                        # Compare timestamps to determine which is newer
+                        $localTimestamp = [DateTime]::Parse($localData.history.lastModifiedAt)
+                        $remoteTimestamp = [DateTime]::Parse($remoteWorkItem.fields.'System.ChangedDate')
+
+                        if ($localTimestamp -gt $remoteTimestamp) {
+                            Sync-TcmTestCaseToRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Force `
+                                -Message "Resolving conflict for '$testCaseId': Local version is newer" `
+                                -MessageColor 'Yellow' `
+                                -ShouldProcessOperation "Resolve conflict - local is newer"
+
+                            Write-Host "[OK] Conflict resolved: Newer local changes pushed to Azure DevOps" -ForegroundColor Green
+                        } else {
+                            Sync-TcmTestCaseFromRemote `
+                                -InputObject $resolved `
+                                -TestCasesRoot $config.TestCasesRoot `
+                                -Force `
+                                -Message "Resolving conflict for '$testCaseId': Remote version is newer" `
+                                -MessageColor 'Yellow' `
+                                -ShouldProcessOperation "Resolve conflict - remote is newer"
+
+                            Write-Host "[OK] Conflict resolved: Newer remote changes pulled from Azure DevOps" -ForegroundColor Green
                         }
-                    } else {
-                        if ($PSCmdlet.ShouldProcess("Test case '$Id'", "Resolve conflict - remote is newer")) {
-                            Write-Host "Resolving conflict for '$Id': Remote version is newer" -ForegroundColor Yellow
-                            Sync-TcmTestCaseFromRemote -Id $Id -TestCasesRoot $config.TestCasesRoot -Force
-                            Write-Host "✓ Conflict resolved: Newer remote changes pulled from Azure DevOps" -ForegroundColor Green
-                        }
+                    }
+
+                    'Manual' {
+                        # Display conflict information for manual resolution
+                        Write-Host "`nConflict Details for Test Case '$testCaseId':" -ForegroundColor Cyan
+                        Write-Host "="*60 -ForegroundColor Cyan
+
+                        Write-Host "`nLocal Version:" -ForegroundColor Yellow
+                        Write-Host "  Title:           $($localData.testCase.title)"
+                        Write-Host "  State:           $($localData.testCase.state)"
+                        Write-Host "  Steps Count:     $($localData.testCase.steps.Count)"
+
+                        Write-Host "`nRemote Version:" -ForegroundColor Yellow
+                        Write-Host "  Title:           $($remoteWorkItem.fields.'System.Title')"
+                        Write-Host "  Last Modified:   $($remoteWorkItem.fields.'System.ChangedDate')"
+                        Write-Host "  Modified By:     $($remoteWorkItem.fields.'System.ChangedBy'.displayName)"
+                        Write-Host "  State:           $($remoteData.state)"
+                        Write-Host "  Steps Count:     $($remoteData.steps.Count)"
+
+                        Write-Host "`n" -ForegroundColor Cyan
+                        Write-Host "To resolve this conflict, run one of the following commands:" -ForegroundColor White
+                        Write-Host "  Resolve-TcmTestCaseConflict -InputObject '$testCaseId' -Strategy LocalWins" -ForegroundColor Gray
+                        Write-Host "  Resolve-TcmTestCaseConflict -InputObject '$testCaseId' -Strategy RemoteWins" -ForegroundColor Gray
+                        Write-Host "  Resolve-TcmTestCaseConflict -InputObject '$testCaseId' -Strategy LatestWins" -ForegroundColor Gray
+
+                        Write-Host "`nOr manually edit the local file and sync:" -ForegroundColor White
+                        Write-Host "  $localPath" -ForegroundColor Gray
+                        Write-Host "  Sync-TcmTestCase -InputObject '$testCaseId'" -ForegroundColor Gray
                     }
                 }
-
-                'Manual' {
-                    # Display conflict information for manual resolution
-                    Write-Host "`nConflict Details for Test Case '$Id':" -ForegroundColor Cyan
-                    Write-Host "=" * 60 -ForegroundColor Cyan
-
-                    Write-Host "`nLocal Version:" -ForegroundColor Yellow
-                    Write-Host "  Title:           $($localData.testCase.title)"
-                    Write-Host "  Last Modified:   $($localData.history.lastModifiedAt)"
-                    Write-Host "  Modified By:     $($localData.history.lastModifiedBy)"
-                    Write-Host "  State:           $($localData.testCase.state)"
-                    Write-Host "  Steps Count:     $($localData.testCase.steps.Count)"
-
-                    Write-Host "`nRemote Version:" -ForegroundColor Yellow
-                    Write-Host "  Title:           $($workItem.fields.'System.Title')"
-                    Write-Host "  Last Modified:   $($workItem.fields.'System.ChangedDate')"
-                    Write-Host "  Modified By:     $($workItem.fields.'System.ChangedBy'.displayName)"
-                    Write-Host "  State:           $($remoteData.state)"
-                    Write-Host "  Steps Count:     $($remoteData.steps.Count)"
-
-                    Write-Host "`n" -ForegroundColor Cyan
-                    Write-Host "To resolve this conflict, run one of the following commands:" -ForegroundColor White
-                    Write-Host "  Resolve-TcmTestCaseConflict -Id '$Id' -Strategy LocalWins" -ForegroundColor Gray
-                    Write-Host "  Resolve-TcmTestCaseConflict -Id '$Id' -Strategy RemoteWins" -ForegroundColor Gray
-                    Write-Host "  Resolve-TcmTestCaseConflict -Id '$Id' -Strategy LatestWins" -ForegroundColor Gray
-
-                    Write-Host "`nOr manually edit the local file and sync:" -ForegroundColor White
-                    Write-Host "  $localPath" -ForegroundColor Gray
-                    Write-Host "  Sync-TcmTestCase -Id '$Id'" -ForegroundColor Gray
-                }
+            } catch {
+                Write-Error "Failed to resolve conflict for test case '$testCaseId': $($_.Exception.Message)"
+                throw
             }
-        } catch {
-            Write-Error "Failed to resolve conflict for test case '$Id': $($_.Exception.Message)"
-            throw
         }
     }
 }
+

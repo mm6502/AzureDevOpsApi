@@ -4,6 +4,10 @@ BeforeAll {
 
 Describe 'Get-TcmFolderPathFromAreaPath' {
 
+    BeforeAll {
+        $script:dirSep = [System.IO.Path]::DirectorySeparatorChar
+    }
+
     Context 'Basic area path conversion' {
 
         It 'Should convert simple area path to folder path' {
@@ -11,7 +15,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area"
 
             # Assert
-            $result | Should -Be "Project/Area/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)"
         }
 
         It 'Should convert multi-level area path to folder path' {
@@ -19,7 +23,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area\Component"
 
             # Assert
-            $result | Should -Be "Project/Area/Component/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)Component$($script:dirSep)"
         }
 
         It 'Should handle single component area path' {
@@ -27,7 +31,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project"
 
             # Assert
-            $result | Should -Be "Project/"
+            $result | Should -Be "Project$($script:dirSep)"
         }
     }
 
@@ -62,7 +66,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\\Area"
 
             # Assert
-            $result | Should -Be "Project/Area/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)"
         }
     }
 
@@ -73,7 +77,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath 'Project\Area<Component>'
 
             # Assert
-            $result | Should -Be "Project/Area_Component_/"
+            $result | Should -Be "Project$($script:dirSep)Area_Component_$($script:dirSep)"
         }
 
         It 'Should sanitize multiple invalid characters' {
@@ -81,7 +85,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath 'Project\Area:Component\Sub*Component?'
 
             # Assert
-            $result | Should -Be "Project/Area_Component/Sub_Component_/"
+            $result | Should -Be "Project$($script:dirSep)Area_Component$($script:dirSep)Sub_Component_$($script:dirSep)"
         }
 
         It 'Should replace spaces with underscores' {
@@ -89,7 +93,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area Component"
 
             # Assert
-            $result | Should -Be "Project/Area_Component/"
+            $result | Should -Be "Project$($script:dirSep)Area_Component$($script:dirSep)"
         }
 
         It 'Should handle mixed valid and invalid characters' {
@@ -97,7 +101,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath 'My Project\Feature: Login\Auth*Module'
 
             # Assert
-            $result | Should -Be "My_Project/Feature__Login/Auth_Module/"
+            $result | Should -Be "My_Project$($script:dirSep)Feature__Login$($script:dirSep)Auth_Module$($script:dirSep)"
         }
     }
 
@@ -108,7 +112,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area\Component\SubComponent\DeepLevel" -MaxDepth 0
 
             # Assert
-            $result | Should -Be "Project/Area/Component/SubComponent/DeepLevel/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)Component$($script:dirSep)SubComponent$($script:dirSep)DeepLevel$($script:dirSep)"
         }
 
         It 'Should limit depth to specified MaxDepth' {
@@ -116,7 +120,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area\Component\SubComponent\DeepLevel" -MaxDepth 3
 
             # Assert
-            $result | Should -Be "Project/Area/Component/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)Component$($script:dirSep)"
         }
 
         It 'Should handle MaxDepth equal to component count' {
@@ -124,7 +128,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area\Component" -MaxDepth 3
 
             # Assert
-            $result | Should -Be "Project/Area/Component/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)Component$($script:dirSep)"
         }
 
         It 'Should handle MaxDepth greater than component count' {
@@ -132,7 +136,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area" -MaxDepth 5
 
             # Assert
-            $result | Should -Be "Project/Area/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)"
         }
 
         It 'Should handle MaxDepth of 1' {
@@ -140,7 +144,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area\Component\SubComponent" -MaxDepth 1
 
             # Assert
-            $result | Should -Be "Project/"
+            $result | Should -Be "Project$($script:dirSep)"
         }
     }
 
@@ -151,7 +155,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Project\Area\Component" -IncludeProject
 
             # Assert
-            $result | Should -Be "Project/Area/Component/"
+            $result | Should -Be "Project$($script:dirSep)Area$($script:dirSep)Component$($script:dirSep)"
         }
     }
 
@@ -162,7 +166,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath "Contoso\WebApp\Authentication\Login"
 
             # Assert
-            $result | Should -Be "Contoso/WebApp/Authentication/Login/"
+            $result | Should -Be "Contoso$($script:dirSep)WebApp$($script:dirSep)Authentication$($script:dirSep)Login$($script:dirSep)"
         }
 
         It 'Should handle area path with numbers and special project names' {
@@ -170,7 +174,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath 'Project_v2.1\Feature_123\API_Endpoints'
 
             # Assert
-            $result | Should -Be "Project_v2.1/Feature_123/API_Endpoints/"
+            $result | Should -Be "Project_v2.1$($script:dirSep)Feature_123$($script:dirSep)API_Endpoints$($script:dirSep)"
         }
 
         It 'Should handle very long area paths with depth limiting' {
@@ -181,7 +185,7 @@ Describe 'Get-TcmFolderPathFromAreaPath' {
             $result = Get-TcmFolderPathFromAreaPath -AreaPath $longPath -MaxDepth 4
 
             # Assert
-            $result | Should -Be "Root/Level1/Level2/Level3/"
+            $result | Should -Be "Root$($script:dirSep)Level1$($script:dirSep)Level2$($script:dirSep)Level3$($script:dirSep)"
         }
     }
 }

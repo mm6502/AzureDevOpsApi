@@ -16,8 +16,8 @@ Result represents the metadata of the exported data.
 ```
 ConvertTo-ExportDataRelease [[-CollectionUri] <Object>] [[-Project] <Object>] [[-DateFrom] <Object>]
  [[-DateTo] <Object>] [[-AsOf] <Object>] [[-ByUser] <Object>] [[-TargetBranch] <Object>]
- [[-TrunkBranch] <Object>] [[-ReleaseBranch] <Object>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [[-TrunkBranch] <Object>] [[-ReleaseBranch] <Object>] [[-TimeZone] <Object>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -170,6 +170,21 @@ Aliases:
 Required: False
 Position: 7
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TimeZone
+Time zone identifier for displaying dates in the export.
+
+```yaml
+Type: Object
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 10
+Default value: [System.TimeZoneInfo]::Local
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

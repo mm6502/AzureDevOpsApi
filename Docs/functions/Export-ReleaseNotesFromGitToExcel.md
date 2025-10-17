@@ -15,7 +15,7 @@ Runs compilation of release notes data from Git based project.
 ```
 Export-ReleaseNotesFromGitToExcel [[-CollectionUri] <Object>] [[-Project] <Object>] [[-DateFrom] <DateTime>]
  [[-DateTo] <DateTime>] [[-AsOf] <DateTime>] [[-ByUser] <Object>] [[-TargetRepository] <Object>]
- [[-TargetBranch] <Object>] [[-Path] <Object>] [[-TimeZone] <String>] [-FromCommits] [-Show] [-PassThru]
+ [[-TargetBranch] <Object>] [[-Path] <Object>] [[-TimeZone] <Object>] [-FromCommits] [-Show] [-PassThru]
  [-UseConstantFileName] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -254,7 +254,7 @@ Windows style zone ids, f.e.
 Default value is "Central Europe Standard Time".
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 

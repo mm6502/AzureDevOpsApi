@@ -41,12 +41,17 @@ testCase:
 
 ```powershell
 # Update custom fields in existing test case
-$testCase = Get-TcmTestCase -Id "TC001" -IncludeMetadata
-$testCase.testCase.customFields["Custom.TestStatus"] = "In Review"
-$testCase | Save-TcmTestCaseYaml -FilePath "TestCases/TC001.yaml"
+# Method 1: Edit the YAML file directly in your editor
+# Open TestCases/TC001.yaml and add/modify under customFields section
+
+# Method 2: Programmatically update the YAML file
+$yamlPath = "TestCases/TC001.yaml"
+$content = Get-Content $yamlPath -Raw
+# Modify content as needed, then save
+$content | Set-Content $yamlPath
 
 # Push the changes
-Sync-TcmTestCaseToRemote -InputObject "TC001"
+Sync-TcmTestCase -InputObject "TC001" -Push
 ```
 
 ## Bulk Operations
@@ -69,7 +74,7 @@ foreach ($tc in $testCases) {
 
 ```powershell
 # Sync all test cases in a folder
-Get-ChildItem "TestCases/Sprint-25/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Sync-TcmTestCaseToRemote
+Get-ChildItem "TestCases/Sprint-25/*.yaml" | Sync-TcmTestCase -Push
 
 # Sync with error handling
 $files = Get-ChildItem "TestCases/**/*.yaml" -Recurse
@@ -77,8 +82,7 @@ $results = @()
 
 foreach ($file in $files) {
     try {
-        $resolved = $file | Resolve-TcmTestCaseFilePathInput
-        Sync-TcmTestCaseToRemote -InputObject $resolved -ErrorAction Stop
+        Sync-TcmTestCase -InputObject $file.FullName -Push -ErrorAction Stop
         $results += [PSCustomObject]@{ File = $file.Name; Status = "Success" }
     } catch {
         $results += [PSCustomObject]@{ File = $file.Name; Status = "Failed"; Error = $_.Exception.Message }
@@ -92,9 +96,7 @@ $results | Format-Table
 
 ```powershell
 # Get sync status for all test cases
-$statusReport = Get-ChildItem "TestCases/**/*.yaml" -Recurse |
-    Resolve-TcmTestCaseFilePathInput |
-    Get-TcmTestCase -IncludeSyncStatus
+$statusReport = Get-TcmTestCase -IncludeSyncStatus
 
 # Group by status
 $statusReport | Group-Object SyncStatus | Select-Object Name, Count
@@ -207,12 +209,19 @@ testCase:
 
 ```powershell
 # Update test case with automation results
-$testCase = Get-TcmTestCase -Id "TC001" -IncludeMetadata
-$testCase.testCase.customFields["Custom.LastRunDate"] = Get-Date -Format "yyyy-MM-dd"
-$testCase.testCase.customFields["Custom.LastRunResult"] = "Passed"
-$testCase | Save-TcmTestCaseYaml -FilePath "TestCases/TC001.yaml"
+# Edit the YAML file directly to add automation results
+$yamlPath = "TestCases/TC001.yaml"
+$content = Get-Content $yamlPath -Raw
 
-Sync-TcmTestCaseToRemote -InputObject "TC001"
+# Update custom fields in the YAML content
+# Or manually edit the file to add:
+#   customFields:
+#     Custom.LastRunDate: "2025-10-16"
+#     Custom.LastRunResult: "Passed"
+
+$content | Set-Content $yamlPath
+
+Sync-TcmTestCase -InputObject "TC001" -Push
 ```
 
 ## Advanced Configuration
@@ -225,9 +234,10 @@ New-TcmConfig -CollectionUri "https://dev.azure.com/org" -Project "DevProject" -
 New-TcmConfig -CollectionUri "https://dev.azure.com/org" -Project "TestProject" -OutputPath ".tcm-config.test.yaml"
 New-TcmConfig -CollectionUri "https://dev.azure.com/org" -Project "ProdProject" -OutputPath ".tcm-config.prod.yaml"
 
-# Use specific config
-$TestCasesRoot = "TestCases-Dev"
-$config = Get-TcmTestCaseConfig -TestCasesRoot $TestCasesRoot -ConfigPath ".tcm-config.dev.yaml"
+# Use specific config by copying it to your test cases directory
+# The functions will automatically find .tcm-config.yaml in the test cases root
+Copy-Item ".tcm-config.dev.yaml" "TestCases-Dev/.tcm-config.yaml"
+Set-Location "TestCases-Dev"
 ```
 
 ### Environment-Specific Settings
@@ -265,7 +275,7 @@ $allFiles = Get-ChildItem "TestCases/**/*.yaml" -Recurse
 
 for ($i = 0; $i -lt $allFiles.Count; $i += $batchSize) {
     $batch = $allFiles[$i..([Math]::Min($i + $batchSize - 1, $allFiles.Count - 1))]
-    $batch | Resolve-TcmTestCaseFilePathInput | Sync-TcmTestCaseToRemote
+    $batch | Sync-TcmTestCase -Push
 
     Write-Progress -Activity "Syncing test cases" -Status "$($i + $batch.Count) of $($allFiles.Count)" -PercentComplete (($i + $batch.Count) / $allFiles.Count * 100)
 }
@@ -280,8 +290,7 @@ workflow Sync-TestCasesParallel {
 
     foreach -parallel ($path in $FilePaths) {
         InlineScript {
-            $resolved = $using:path | Resolve-TcmTestCaseFilePathInput
-            Sync-TcmTestCaseToRemote -InputObject $resolved
+            Sync-TcmTestCase -InputObject $using:path -Push
         }
     }
 }
@@ -299,28 +308,27 @@ function Sync-WithLogging {
     param([string]$Path)
 
     try {
-        $resolved = Resolve-TcmTestCaseFilePathInput -Path $Path
-        $status = Get-TcmTestCase -Id $resolved.Id -IncludeSyncStatus
+        $testCase = Get-TcmTestCase -InputObject $Path -IncludeSyncStatus
 
-        Write-Verbose "Processing $($resolved.Id) - Status: $($status.SyncStatus)"
+        Write-Verbose "Processing $($testCase.Id) - Status: $($testCase.SyncStatus)"
 
-        switch ($status.SyncStatus) {
+        switch ($testCase.SyncStatus) {
             "synced" {
-                Write-Verbose "Already synced: $($resolved.Id)"
-                return [PSCustomObject]@{ Id = $resolved.Id; Status = "Skipped"; Reason = "Already synced" }
+                Write-Verbose "Already synced: $($testCase.Id)"
+                return [PSCustomObject]@{ Id = $testCase.Id; Status = "Skipped"; Reason = "Already synced" }
             }
             "conflict" {
-                Write-Warning "Conflict detected: $($resolved.Id)"
-                return [PSCustomObject]@{ Id = $resolved.Id; Status = "Failed"; Reason = "Conflict detected" }
+                Write-Warning "Conflict detected: $($testCase.Id)"
+                return [PSCustomObject]@{ Id = $testCase.Id; Status = "Failed"; Reason = "Conflict detected" }
             }
             default {
-                Sync-TcmTestCaseToRemote -InputObject $resolved
-                return [PSCustomObject]@{ Id = $resolved.Id; Status = "Success" }
+                Sync-TcmTestCase -InputObject $testCase.Id -Push
+                return [PSCustomObject]@{ Id = $testCase.Id; Status = "Success" }
             }
         }
     } catch {
         Write-Error "Failed to sync $($Path): $($_.Exception.Message)"
-        return [PSCustomObject]@{ Id = $resolved.Id; Status = "Error"; Error = $_.Exception.Message }
+        return [PSCustomObject]@{ Id = $testCase.Id; Status = "Error"; Error = $_.Exception.Message }
     }
 }
 
@@ -353,20 +361,6 @@ foreach ($row in $excelData) {
         "Custom.LegacyId" = $row.Id
         "Custom.MigratedDate" = Get-Date -Format "yyyy-MM-dd"
     }
-}
-```
-
-### Archiving Old Test Cases
-
-```powershell
-# Move old test cases to archive
-$oldTestCases = Get-ChildItem "TestCases/**/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Get-TcmTestCase -IncludeMetadata | Where-Object {
-    $_.history.lastModifiedAt -lt (Get-Date).AddMonths(-6)
-}
-
-foreach ($tc in $oldTestCases) {
-    $fileName = Split-Path $tc.FilePath -Leaf
-    Move-Item $tc.FilePath "TestCases/Archive/$fileName" -Force
 }
 ```
 

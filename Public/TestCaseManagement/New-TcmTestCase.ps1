@@ -243,7 +243,7 @@ function New-TcmTestCase {
         Write-Host "Test case '$Id' created successfully at: $actualFilePath" -ForegroundColor Green
 
         # Return the created test case
-        return Get-TcmTestCaseFromFile -FilePath $actualFilePath -IncludeMetadata
+        return Get-TcmTestCaseFromFile -FilePath $actualFilePath
     } catch {
         throw "Failed to create test case '$Id'. Error: $($_.Exception.Message)"
     }

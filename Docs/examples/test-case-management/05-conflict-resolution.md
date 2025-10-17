@@ -32,21 +32,21 @@ The TestCaseManagement system provides tools to detect and resolve these conflic
 Get-TcmTestCase -Id "TC001" -IncludeSyncStatus
 
 # Check status of all test cases
-Get-ChildItem "TestCases/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Get-TcmTestCase -IncludeSyncStatus
+Get-TcmTestCase -IncludeSyncStatus
 
 # Filter for conflicts only
-Get-ChildItem "TestCases/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Get-TcmTestCase -IncludeSyncStatus | Where-Object { $_.SyncStatus -eq "conflict" }
+Get-TcmTestCase -IncludeSyncStatus | Where-Object { $_.SyncStatus -eq "conflict" }
 ```
 
 ### Manual Sync Operations
 
 ```powershell
 # Attempting to push when there's a conflict
-Sync-TcmTestCaseToRemote -InputObject "TC001"
+Sync-TcmTestCase -InputObject "TC001" -Push
 # This will fail with a conflict error
 
 # Attempting to pull when there's a conflict
-Sync-TcmTestCaseFromRemote -Id 12345
+Sync-TcmTestCase -InputObject "TC001" -Pull
 # This will also fail with a conflict error
 ```
 
@@ -56,7 +56,7 @@ Sync-TcmTestCaseFromRemote -Id 12345
 
 ```powershell
 # Force push your local changes, overwriting remote
-Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
+Sync-TcmTestCase -InputObject "TC001" -Push -Force
 
 # This resolves the conflict by making remote match local
 ```
@@ -65,7 +65,7 @@ Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
 
 ```powershell
 # Force pull remote changes, overwriting local
-Sync-TcmTestCaseFromRemote -Id 12345 -Force
+Sync-TcmTestCase -InputObject "TC001" -Pull -Force
 
 # This resolves the conflict by making local match remote
 ```
@@ -76,24 +76,31 @@ For complex conflicts, you need to manually decide which changes to keep:
 
 ```powershell
 # 1. Get both versions
-$local = Get-TcmTestCase -Id "TC001" -IncludeMetadata
+$local = Get-TcmTestCase -Id "TC001"
 $remote = Get-WorkItem -WorkItem 12345 -CollectionUri "https://dev.azure.com/org" -Project "Project"
 
 # 2. Compare differences manually
-# Look at $local.testCase and $remote.fields
+# Look at $local.LocalData and $remote.fields
 
 # 3. Edit the local YAML file to incorporate desired changes
 
 # 4. Push the resolved version
-Sync-TcmTestCaseToRemote -InputObject "TC001"
+Sync-TcmTestCase -InputObject "TC001" -Push
 ```
 
-### Strategy 4: Interactive Resolution (Future Feature)
+### Strategy 4: Interactive Resolution
 
+> ⚠️ **Note:** Interactive conflict resolution is planned for a future release.
+> Currently, use Strategy 3 (Manual Resolution) or force push/pull (Strategies 1-2).
+
+**Planned functionality:**
 ```powershell
-# This feature is planned but not yet implemented
+# Will be available in future version
 Resolve-TcmTestCaseConflict -Id "TC001" -Interactive
+# This will open an interactive merge tool
 ```
+
+**Current workaround:** Use Strategy 3 (Manual Resolution) shown above.
 
 ## Common Conflict Scenarios
 
@@ -113,15 +120,15 @@ testCase:
 **Resolution:**
 ```powershell
 # Option A: Keep local title
-Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
+Sync-TcmTestCase -InputObject "TC001" -Push -Force
 
 # Option B: Keep remote title
-Sync-TcmTestCaseFromRemote -Id 12345 -Force
+Sync-TcmTestCase -InputObject "TC001" -Pull -Force
 
 # Option C: Choose a new title
 # Edit the YAML file, then push
 (Get-Content "TestCases/TC001.yaml" -Raw) -replace "User Login Validation", "User Authentication" | Set-Content "TestCases/TC001.yaml"
-Sync-TcmTestCaseToRemote -InputObject "TC001"
+Sync-TcmTestCase -InputObject "TC001" -Push
 ```
 
 ### Scenario 2: Test Steps Modified
@@ -149,7 +156,7 @@ $remote = Get-WorkItem -WorkItem 12345
 
 # Edit local YAML to merge the best of both
 # Then push
-Sync-TcmTestCaseToRemote -InputObject "TC001"
+Sync-TcmTestCase -InputObject "TC001" -Push
 ```
 
 ### Scenario 3: State Changed
@@ -160,10 +167,10 @@ Sync-TcmTestCaseToRemote -InputObject "TC001"
 **Resolution:**
 ```powershell
 # If remote state is correct
-Sync-TcmTestCaseFromRemote -Id 12345 -Force
+Sync-TcmTestCase -InputObject "TC001" -Pull -Force
 
 # If local state is correct
-Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
+Sync-TcmTestCase -InputObject "TC001" -Push -Force
 ```
 
 ## Best Practices for Avoiding Conflicts
@@ -172,13 +179,13 @@ Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
 
 ```powershell
 # Always pull latest changes before making edits
-Sync-TcmTestCaseFromRemote
+Sync-TcmTestCase -Pull
 
 # Then make your changes
 # Edit YAML files...
 
 # Push when done
-Sync-TcmTestCaseToRemote -InputObject "YourChanges"
+Sync-TcmTestCase -InputObject "TC001" -Push
 ```
 
 ### 2. Work on Different Test Cases
@@ -207,10 +214,10 @@ git push origin feature/new-test-cases
 ```powershell
 # Set up a regular sync routine
 # Pull in the morning
-Sync-TcmTestCaseFromRemote
+Sync-TcmTestCase -Pull
 
 # Push at end of day
-Get-ChildItem "TestCases/MyWork/*.yaml" | Resolve-TcmTestCaseFilePathInput | Sync-TcmTestCaseToRemote
+Get-ChildItem "TestCases/MyWork/*.yaml" | Sync-TcmTestCase -Push
 ```
 
 ## Advanced Conflict Resolution
@@ -236,11 +243,11 @@ git commit
 
 ```powershell
 # Find all conflicts
-$conflicts = Get-ChildItem "TestCases/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Get-TcmTestCase -IncludeSyncStatus | Where-Object { $_.SyncStatus -eq "conflict" }
+$conflicts = Get-TcmTestCase -IncludeSyncStatus | Where-Object { $_.SyncStatus -eq "conflict" }
 
 # Resolve each conflict (example: prefer local)
 foreach ($conflict in $conflicts) {
-    Sync-TcmTestCaseToRemote -InputObject $conflict.Id -Force
+    Sync-TcmTestCase -InputObject $conflict.Id -Push -Force
 }
 ```
 
@@ -252,7 +259,7 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 Copy-Item "TestCases" "TestCases-Backup-$timestamp" -Recurse -Force
 
 # Then resolve conflicts
-Sync-TcmTestCaseToRemote -InputObject "TC001" -Force
+Sync-TcmTestCase -InputObject "TC001" -Push -Force
 ```
 
 ## Troubleshooting

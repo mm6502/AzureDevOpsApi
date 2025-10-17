@@ -24,16 +24,21 @@ Get started quickly with the module:
 
 **Start here if you're new to the module.**
 
-### [Credentials Management](./credentials/01-multiple-credentials.md)
+### [Credentials Management](./credentials/)
 
-Learn how to manage multiple Azure DevOps connections:
+Learn how to authenticate and manage multiple Azure DevOps connections:
 
+- **[Creating PAT Tokens](./credentials/00-creating-pat-token.md)** - Step-by-step guide to Personal Access Tokens
+- **[Multiple Credentials](./credentials/01-multiple-credentials.md)** - Managing multiple collections and projects
+
+Key topics:
+- Setting up Personal Access Tokens (PATs)
 - Setting default credentials
 - Working with multiple collections and projects
 - Different authorization methods (PAT, Windows, Basic)
-- URL-based credential selection
+- Security best practices
 
-**Essential for working with multiple Azure DevOps instances.**
+**Start here if you're new to Azure DevOps authentication.**
 
 ### [TestCaseManagement](./test-case-management/)
 

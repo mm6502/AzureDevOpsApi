@@ -96,10 +96,10 @@ Move-Item "TestCases/Old-Folder/12345-test.yaml" "TestCases/New-Folder/12345-tes
 
 ```powershell
 # Push all test cases in a specific folder
-Get-ChildItem "TestCases/Smoke-Tests/*.yaml" -Recurse | Resolve-TcmTestCaseFilePathInput | Sync-TcmTestCaseToRemote
+Get-ChildItem "TestCases/Smoke-Tests/*.yaml" -Recurse | Sync-TcmTestCase -Push
 
 # Pull all test cases (scans all folders automatically)
-Sync-TcmTestCaseFromRemote
+Sync-TcmTestCase -Pull
 ```
 
 ## Best Practices

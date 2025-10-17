@@ -22,7 +22,7 @@ function Save-TcmTestCaseYaml {
         [Parameter(Mandatory)]
         $Data,
 
-        [string] $TestCasesRoot
+        [string] $TestCasesRoot = $PWD.Path
     )
 
     try {
@@ -36,11 +36,12 @@ function Save-TcmTestCaseYaml {
             if (-not [string]::IsNullOrEmpty($folderPath)) {
                 # If TestCasesRoot is provided, make FilePath relative to it first
                 if ($TestCasesRoot) {
-                    $FilePath = [System.IO.Path]::GetRelativePath($TestCasesRoot, $FilePath)
+                    $FilePath = Resolve-RelativePath -RelativeBasePath $TestCasesRoot -Path $FilePath
                 }
 
                 # Combine folder path with existing file path
-                $folderPath = $folderPath.TrimEnd('/')
+                $dirSep = [System.IO.Path]::DirectorySeparatorChar
+                $folderPath = $folderPath.TrimEnd($dirSep)
                 $fileName = [System.IO.Path]::GetFileName($FilePath)
                 $FilePath = Join-Path $folderPath $fileName
 

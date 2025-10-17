@@ -57,8 +57,9 @@ function Get-TcmFolderPathFromAreaPath {
         $component -replace '[<>:"/\\|?*]', '_' -replace '\s+', '_'
     }
 
-    # Join with forward slashes and ensure trailing slash
-    $folderPath = ($sanitizedComponents -join '/') + '/'
+    # Join with platform-specific directory separator
+    $dirSep = [System.IO.Path]::DirectorySeparatorChar
+    $folderPath = ($sanitizedComponents -join $dirSep) + $dirSep
 
     return $folderPath
 }
