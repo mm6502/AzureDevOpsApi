@@ -12,13 +12,18 @@ Describe 'Resolve-TcmTestCaseConflict' {
                 [string]$Id = '123',
                 [string]$SyncStatus = 'conflict',
                 [string]$LocalLastModified = '2024-01-15T09:00:00Z',
-                [string]$RemoteChangedDate = '2024-01-15T10:30:00Z'
+                [string]$RemoteChangedDate = '2024-01-15T10:30:00Z',
+                [string]$FilePath = $null
             )
+
+            if (-not $FilePath) {
+                $FilePath = Join-Path -Path $TestDrive -ChildPath "$Id.yaml"
+            }
 
             $obj = [PSCustomObject]@{
                 Id = $Id
                 SyncStatus = $SyncStatus
-                FilePath = "C:\test\$Id.yaml"
+                FilePath = $FilePath
                 LocalData = @{
                     id = $Id
                     title = 'Test Case Title'
@@ -153,6 +158,7 @@ testCase:
 
         It 'Should warn when test case does not have a conflict' {
             # Arrange
+            $testFilePath = Join-Path -Path $TestDrive -ChildPath '123.yaml'
             Mock -ModuleName $ModuleName -CommandName Get-TcmTestCase -MockWith {
                 [PSCustomObject]@{
                     Id = '123'
@@ -167,7 +173,7 @@ testCase:
                             'System.ChangedBy' = @{ displayName = 'Test User' }
                         }
                     }
-                    FilePath = 'C:\test\123.yaml'
+                    FilePath = $testFilePath
                 }
             }
 

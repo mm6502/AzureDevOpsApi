@@ -5,6 +5,8 @@ BeforeAll {
 Describe 'Resolve-TcmTestCaseSyncStatus' {
 
     BeforeAll {
+        $testRoot = Join-Path -Path $TestDrive -ChildPath 'temp'
+
         # Mock Get-WorkItem
         Mock -ModuleName $ModuleName -CommandName Get-WorkItem -MockWith {
             @{
@@ -56,7 +58,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = $testRoot }
 
             # Assert
             $result.SyncStatus | Should -Be 'new-remote'
@@ -84,7 +86,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = $testRoot }
 
             # Assert
             $result.SyncStatus | Should -Be 'synced'
@@ -113,7 +115,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = $testRoot }
 
             # Assert
             $result.SyncStatus | Should -Be 'local-changes'
@@ -142,7 +144,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = $testRoot }
 
             # Assert
             $result.SyncStatus | Should -Be 'remote-changes'
@@ -171,7 +173,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = $testRoot }
 
             # Assert
             $result.SyncStatus | Should -Be 'conflict'
@@ -197,7 +199,7 @@ Describe 'Resolve-TcmTestCaseSyncStatus' {
             $inputObject.PSTypeNames.Insert(0, 'PSTypeNames.AzureDevOpsApi.TcmTestCaseExtended')
 
             # Act
-            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = 'C:\temp' }
+            $result = Resolve-TcmTestCaseSyncStatus -InputObject $inputObject -Config @{ TestCasesRoot = $testRoot }
 
             # Assert
             $result.SyncStatus | Should -Be 'local-changes'

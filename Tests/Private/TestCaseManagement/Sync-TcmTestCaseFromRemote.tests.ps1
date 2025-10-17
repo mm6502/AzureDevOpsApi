@@ -61,7 +61,8 @@ azureDevOps:
 
             # Mock internal functions
             Mock -ModuleName $ModuleName -CommandName Save-TcmTestCaseYaml -MockWith {
-                return 'C:\test\output.yaml'
+                $outputPath = Join-Path -Path $TestDrive -ChildPath 'output.yaml'
+                return $outputPath
             }
             Mock -ModuleName $ModuleName -CommandName Get-TcmTestCaseFromFile -MockWith {
                 return [PSCustomObject]@{ id = '123'; title = 'Test' }

@@ -4,13 +4,18 @@ BeforeAll {
 
 Describe 'ConvertTo-TcmTestCaseInput' {
 
+    BeforeAll {
+        $testCasesRoot = Join-Path -Path $TestDrive -ChildPath 'TestCases'
+        $testFilePath = Join-Path -Path $testCasesRoot -ChildPath 'TC001.yaml'
+    }
+
     Context 'TcmTestCaseInput pass-through' {
 
         It 'Should pass through existing TcmTestCaseInput objects' {
             # Arrange
             $inputObject = [PSCustomObject]@{
                 PSTypeName = 'PSTypeNames.AzureDevOpsApi.TcmTestCaseInput'
-                FilePath   = 'C:\TestCases\TC001.yaml'
+                FilePath   = $testFilePath
                 Id         = 'TC001'
                 SyncStatus = $null
                 LocalData  = $null
@@ -23,7 +28,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             # Assert
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 1
-            $result.FilePath | Should -Be 'C:\TestCases\TC001.yaml'
+            $result.FilePath | Should -Be $testFilePath
             $result.Id | Should -Be 'TC001'
         }
     }
@@ -34,7 +39,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             # Arrange
             $testCaseObject = [PSCustomObject]@{
                 PSTypeName = $global:PSTypeNames.AzureDevOpsApi.TcmTestCaseLocalData
-                FilePath   = 'C:\TestCases\TC001.yaml'
+                FilePath   = $testFilePath
                 testCase   = @{ id = 'TC001'; title = 'Test Case 1' }
             }
 
@@ -45,7 +50,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 1
             $result[0].PSTypeNames[0] | Should -Be 'PSTypeNames.AzureDevOpsApi.TcmTestCaseInput'
-            $result[0].FilePath | Should -Be 'C:\TestCases\TC001.yaml'
+            $result[0].FilePath | Should -Be $testFilePath
             $result[0].Id | Should -Be 'TC001'
             $result[0].LocalData | Should -Be $testCaseObject
         }
@@ -56,7 +61,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
         It 'Should wrap hashtable with testCase.id property' {
             # Arrange
             $hashtable = @{
-                FilePath = 'C:\TestCases\TC001.yaml'
+                FilePath = $testFilePath
                 testCase = @{ id = 'TC001'; title = 'Test Case 1' }
             }
 
@@ -67,14 +72,15 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 1
             $result[0].PSTypeNames[0] | Should -Be 'PSTypeNames.AzureDevOpsApi.TcmTestCaseInput'
-            $result[0].FilePath | Should -Be 'C:\TestCases\TC001.yaml'
+            $result[0].FilePath | Should -Be $testFilePath
             $result[0].Id | Should -Be 'TC001'
         }
 
         It 'Should wrap PSCustomObject with testCase.id property' {
             # Arrange
+            $testFilePath2 = Join-Path -Path $testCasesRoot -ChildPath 'TC002.yaml'
             $customObject = [PSCustomObject]@{
-                FilePath = 'C:\TestCases\TC002.yaml'
+                FilePath = $testFilePath2
                 testCase = [PSCustomObject]@{ id = 'TC002'; title = 'Test Case 2' }
             }
 
@@ -113,7 +119,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
 
         It 'Should handle absolute file paths' {
             # Arrange
-            $filePath = 'C:\TestCases\TC001.yaml'
+            $filePath = $testFilePath
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $Path -eq $filePath -and $PathType -eq 'Leaf' }
 
             # Act
@@ -129,7 +135,6 @@ Describe 'ConvertTo-TcmTestCaseInput' {
         It 'Should resolve relative paths against TestCasesRoot' {
             # Arrange
             $relativePath = 'TC001.yaml'
-            $testCasesRoot = 'C:\TestCases'
             $expectedPath = Join-Path -Path $testCasesRoot -ChildPath $relativePath
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $Path -eq $expectedPath -and $PathType -eq 'Leaf' }
 
@@ -143,7 +148,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
 
         It 'Should error on invalid file paths' {
             # Arrange
-            $invalidPath = 'C:\NonExistent\file.yaml'
+            $invalidPath = Join-Path -Path $TestDrive -ChildPath 'NonExistent' | Join-Path -ChildPath 'file.yaml'
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $false }
 
             # Act & Assert
@@ -155,34 +160,34 @@ Describe 'ConvertTo-TcmTestCaseInput' {
 
         It 'Should handle directory paths and return multiple files' {
             # Arrange
-            $directoryPath = 'C:\TestCases'
+            $testFile2 = Join-Path -Path $testCasesRoot -ChildPath 'TC002.yaml'
             $mockFiles = @(
-                [PSCustomObject]@{ FullName = 'C:\TestCases\TC001.yaml' },
-                [PSCustomObject]@{ FullName = 'C:\TestCases\TC002.yaml' }
+                [PSCustomObject]@{ FullName = $testFilePath },
+                [PSCustomObject]@{ FullName = $testFile2 }
             )
-            Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $Path -eq $directoryPath -and $PathType -eq 'Container' }
+            Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $Path -eq $testCasesRoot -and $PathType -eq 'Container' }
             Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { $mockFiles }
 
             # Act
-            $result = ConvertTo-TcmTestCaseInput -InputObject $directoryPath
+            $result = ConvertTo-TcmTestCaseInput -InputObject $testCasesRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 2
-            $result[0].FilePath | Should -Be 'C:\TestCases\TC001.yaml'
-            $result[1].FilePath | Should -Be 'C:\TestCases\TC002.yaml'
+            $result[0].FilePath | Should -Be $testFilePath
+            $result[1].FilePath | Should -Be $testFile2
         }
 
         It 'Should exclude dot-files from directory scanning' {
             # Arrange
-            $directoryPath = 'C:\TestCases'
-            Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $Path -eq $directoryPath -and $PathType -eq 'Container' }
+            $configFile = Join-Path -Path $testCasesRoot -ChildPath '.tcm-config.yaml'
+            Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $Path -eq $testCasesRoot -and $PathType -eq 'Container' }
             Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
-                , @([PSCustomObject]@{ FullName = 'C:\TestCases\.tcm-config.yaml' })
+                , @([PSCustomObject]@{ FullName = $configFile })
             }
 
             # Act
-            $result = ConvertTo-TcmTestCaseInput -InputObject $directoryPath
+            $result = ConvertTo-TcmTestCaseInput -InputObject $testCasesRoot
 
             # Assert
             $result | Should -BeNullOrEmpty
@@ -194,14 +199,14 @@ Describe 'ConvertTo-TcmTestCaseInput' {
         It 'Should handle numeric IDs with local file match' {
             # Arrange
             $id = '123'
-            $expectedFilePath = 'C:\TestCases\123-test.yaml'
+            $expectedFilePath = Join-Path -Path $testCasesRoot -ChildPath '123-test.yaml'
             Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
                 , @([PSCustomObject]@{ FullName = $expectedFilePath; Name = '123-test.yaml' })
             }
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $false }
 
             # Act
-            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot 'C:\TestCases'
+            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot $testCasesRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
@@ -217,7 +222,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $false }
 
             # Act
-            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot 'C:\TestCases'
+            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot $testCasesRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
@@ -229,14 +234,14 @@ Describe 'ConvertTo-TcmTestCaseInput' {
         It 'Should handle non-numeric IDs with filename extraction' {
             # Arrange
             $id = 'TC001'
-            $expectedFilePath = 'C:\TestCases\TC001-login.yaml'
+            $expectedFilePath = Join-Path -Path $testCasesRoot -ChildPath 'TC001-login.yaml'
             Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
                 , @([PSCustomObject]@{ FullName = $expectedFilePath; Name = 'TC001-login.yaml' })
             }
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $false }
 
             # Act
-            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot 'C:\TestCases'
+            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot $testCasesRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
@@ -247,7 +252,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
         It 'Should handle IDs with file content parsing for non-numeric IDs' {
             # Arrange
             $id = 'CUSTOM001'
-            $filePath = 'C:\TestCases\custom-test.yaml'
+            $filePath = Join-Path -Path $testCasesRoot -ChildPath 'custom-test.yaml'
             Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith {
                 , @([PSCustomObject]@{ FullName = $filePath; Name = 'custom-test.yaml' })
             }
@@ -257,7 +262,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $false }
 
             # Act
-            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot 'C:\TestCases'
+            $result = ConvertTo-TcmTestCaseInput -InputObject $id -TestCasesRoot $testCasesRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
@@ -275,7 +280,7 @@ Describe 'ConvertTo-TcmTestCaseInput' {
             Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { @() }
 
             # Act
-            $result = $inputs | ConvertTo-TcmTestCaseInput -TestCasesRoot 'C:\TestCases'
+            $result = $inputs | ConvertTo-TcmTestCaseInput -TestCasesRoot $testCasesRoot
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
@@ -289,11 +294,9 @@ Describe 'ConvertTo-TcmTestCaseInput' {
 
         It 'Should handle null input by scanning directory' {
             # Arrange
-            $testCasesRoot = 'C:\TestCases'
-            $mockFiles = @([PSCustomObject]@{ FullName = 'C:\TestCases\TC001.yaml' })
             Mock -ModuleName $ModuleName -CommandName Get-Item -MockWith { $testCasesRoot }
             Mock -ModuleName $ModuleName -CommandName Test-Path -MockWith { $true } -ParameterFilter { $PathType -eq 'Container' }
-            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { $mockFiles }
+            Mock -ModuleName $ModuleName -CommandName Get-ChildItem -MockWith { @([PSCustomObject]@{ FullName = $testFilePath }) }
 
             # Act
             $result = ConvertTo-TcmTestCaseInput -TestCasesRoot $testCasesRoot

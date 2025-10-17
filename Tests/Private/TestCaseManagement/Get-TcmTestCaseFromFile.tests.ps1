@@ -16,6 +16,7 @@ Describe 'Get-TcmTestCaseFromFile' {
 
         It 'Should load and parse YAML file correctly' {
             # Arrange
+            $testFilePath = Join-Path -Path $TestDrive -ChildPath 'TC001.yaml'
             $yamlContent = @"
 testCase:
   id: 123
@@ -38,7 +39,7 @@ history:
             }
 
             # Act
-            $result = Get-TcmTestCaseFromFile -FilePath 'C:\temp\TC001.yaml'
+            $result = Get-TcmTestCaseFromFile -FilePath $testFilePath
 
             # Assert
             $result | Should -Not -BeNullOrEmpty
@@ -48,11 +49,12 @@ history:
 
         It 'Should handle invalid YAML gracefully' {
             # Arrange
+            $testFilePath = Join-Path -Path $TestDrive -ChildPath 'TC001.yaml'
             Mock -ModuleName $ModuleName -CommandName Get-Content -MockWith { "invalid: yaml: content: [" }
             Mock -ModuleName $ModuleName -CommandName ConvertFrom-Yaml -MockWith { throw "YAML parse error" }
 
             # Act & Assert
-            { Get-TcmTestCaseFromFile -FilePath 'C:\temp\TC001.yaml' } | Should -Throw
+            { Get-TcmTestCaseFromFile -FilePath $testFilePath } | Should -Throw
         }
     }
 }
