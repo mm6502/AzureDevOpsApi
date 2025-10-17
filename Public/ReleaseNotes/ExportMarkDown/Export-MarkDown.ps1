@@ -45,7 +45,7 @@ function Export-MarkDown {
 
         $ManagementWorkItemTypes,
 
-        [string] $TimeZone = 'Central Europe Standard Time',
+        $TimeZone = [System.TimeZoneInfo]::Local,
 
         $Environment,
 
@@ -63,7 +63,11 @@ function Export-MarkDown {
         Write-Progress -Activity $activity
 
         # Determine the time zone
-        $targetTimeZone = Get-CustomTimeZone -Id $TimeZone
+        if ($TimeZone -is [TimeZoneInfo]) {
+            $targetTimeZone = $TimeZone
+        } else {
+            $targetTimeZone = Get-CustomTimeZone -Id $TimeZone
+        }
 
         # Determine the output file name
         $file = Export-DetermineOutputFileName `

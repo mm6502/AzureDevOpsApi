@@ -21,16 +21,9 @@ function Get-CustomTimeZone {
     )
 
     process {
-
-        # if powershell 7, use native cmdlet
-        if ((Get-PSVersion) -ge 7) {
-            foreach ($item in $Id) {
-                Get-TimeZone -Id $Id
-            }
-            return
-        }
-
         # if time zone identifier is given, try to convert
-        [System.TimeZoneInfo]::FindSystemTimeZoneById($Id)
+        foreach ($item in $Id) {
+            Get-TimeZone -Id $item
+        }
     }
 }

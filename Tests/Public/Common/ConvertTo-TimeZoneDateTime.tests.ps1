@@ -52,13 +52,14 @@ Describe 'ConvertTo-TimeZoneDateTime' {
         $result.Kind | Should -Be 'Unspecified'
     }
 
-    It 'Should default to UTC when no TimeZone is specified' {
+    It 'Should default to Local when no TimeZone is specified' {
         # Act
         $result = ConvertTo-TimeZoneDateTime -DateTime $utcDateTime
 
         # Assert
-        $result | Should -Be $utcDateTime
-        $result.Kind | Should -Be 'Utc'
+        $expected = [TimeZoneInfo]::ConvertTime($utcDateTime, [TimeZoneInfo]::Local)
+        $result | Should -Be $expected
+        $result.Kind | Should -Be 'Local'
     }
 
     It 'Should handle string input for DateTime' {

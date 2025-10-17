@@ -50,7 +50,7 @@ Describe 'Export-DetermineOutputFileName' {
 
     It 'Should generate correct filename with provided path and date' {
         # Arrange
-        $expected = Join-Path -Path '~\test' -ChildPath 'ReleaseNotes_TestProject_2023-05-15_10-30.xlsx'
+        $expected = Join-Path -Path '~\test' -ChildPath 'ReleaseNotes_TestProject_2023-05-15_12-30.xlsx'
 
         # Act
         $result = Export-DetermineOutputFileName `

@@ -30,7 +30,7 @@ function Export-ExcelRelease {
 
         # list of properties we want to export
         $properties = @(
-            'Collection', 'Project', 'DateFrom', 'DateTo', 'AsOf',
+            'Collection', 'Project', 'TimeZone', 'DateFrom', 'DateTo', 'AsOf',
             'TargetBranch', 'TrunkBranch', 'ReleaseBranch',
             'ByUser', 'CreatedDate', 'CreatedBy'
         )
